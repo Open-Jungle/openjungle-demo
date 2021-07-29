@@ -2,95 +2,6 @@
     "contractName":"dexBook",
     "abi":[
         {
-            "inputs": [
-                {
-                    "internalType": "uint256",
-                    "name": "orderID",
-                    "type": "uint256"
-                }
-            ],
-            "name": "cancelOrder",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "uint256",
-                    "name": "orderID",
-                    "type": "uint256"
-                }
-            ],
-            "name": "fillOrder",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "uint128",
-                    "name": "currencyIDFrom",
-                    "type": "uint128"
-                },
-                {
-                    "internalType": "uint128",
-                    "name": "currencyIDTo",
-                    "type": "uint128"
-                },
-                {
-                    "internalType": "uint256",
-                    "name": "orderAmount",
-                    "type": "uint256"
-                },
-                {
-                    "internalType": "uint256",
-                    "name": "orderPrice",
-                    "type": "uint256"
-                }
-            ],
-            "name": "newOrder",
-            "outputs": [
-                {
-                    "internalType": "uint256",
-                    "name": "",
-                    "type": "uint256"
-                }
-            ],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "string",
-                    "name": "name",
-                    "type": "string"
-                },
-                {
-                    "internalType": "address",
-                    "name": "contractAddress",
-                    "type": "address"
-                }
-            ],
-            "name": "setCurrency",
-            "outputs": [
-                {
-                    "internalType": "uint128",
-                    "name": "",
-                    "type": "uint128"
-                }
-            ],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [],
-            "stateMutability": "nonpayable",
-            "type": "constructor"
-        },
-        {
             "anonymous": false,
             "inputs": [
                 {
@@ -98,6 +9,12 @@
                     "internalType": "address",
                     "name": "owner",
                     "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "bytes32",
+                    "name": "pair",
+                    "type": "bytes32"
                 },
                 {
                     "indexed": true,
@@ -203,10 +120,115 @@
                     "internalType": "string",
                     "name": "currencyName",
                     "type": "string"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint32",
+                    "name": "oneMinusFees",
+                    "type": "uint32"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint8",
+                    "name": "decimals",
+                    "type": "uint8"
                 }
             ],
             "name": "SetNewCurrency",
             "type": "event"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "orderID",
+                    "type": "uint256"
+                }
+            ],
+            "name": "cancelOrder",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "orderID",
+                    "type": "uint256"
+                }
+            ],
+            "name": "fillOrder",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint128",
+                    "name": "currencyIDFrom",
+                    "type": "uint128"
+                },
+                {
+                    "internalType": "uint128",
+                    "name": "currencyIDTo",
+                    "type": "uint128"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "orderAmount",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "orderPrice",
+                    "type": "uint256"
+                }
+            ],
+            "name": "newOrder",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint32",
+                    "name": "oneMinusFees",
+                    "type": "uint32"
+                },
+                {
+                    "internalType": "uint8",
+                    "name": "decimals",
+                    "type": "uint8"
+                }
+            ],
+            "name": "setCurrency",
+            "outputs": [
+                {
+                    "internalType": "uint128",
+                    "name": "",
+                    "type": "uint128"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "stateMutability": "nonpayable",
+            "type": "constructor"
         },
         {
             "inputs": [],
@@ -313,7 +335,7 @@
     ],
      "networks": {
         "97": {
-          "address": "0x3a4436F93079F5721e65F72eAa8DB0b9531505a8"
+          "address": "0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9"
         }}
 }
     
