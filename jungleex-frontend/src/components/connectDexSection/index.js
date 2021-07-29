@@ -1,9 +1,14 @@
 import React from 'react'
 
-const ConnectDexSection = ({connectToDexBook}) => {
+const ConnectDexSection = ({connectToDexBook, bookSize}) => {
     return (
         <div>
-            <button onClick={connectToDexBook}>connect</button>
+            <button onClick={alert('wtf1')}>connect</button>
+            <p>
+                {bookSize === undefined ? 
+                    '':
+                    bookSize}
+            </p>
         </div>
     )
 }
