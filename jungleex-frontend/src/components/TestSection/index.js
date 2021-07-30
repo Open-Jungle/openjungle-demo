@@ -1,13 +1,13 @@
-import React, { useState }from 'react'
-import getDexBook from '../contracts/getDexBook';
-import getContract from '../contracts/getContract';
+import React, {useState} from 'react'
+import { TestSection } from './testSectionElements'
 
+import getDexBook from '../../contracts/getDexBook';
+import getContract from '../../contracts/getContract';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { ethers } from 'ethers';
-
 import IPFS from 'ipfs-core';
 
-const HomePage = () => {
+const Testsection = () => {
     const toBuffer = require('it-to-buffer');
 
     const [dexBook, setDexBook] = useState(undefined);
@@ -17,7 +17,7 @@ const HomePage = () => {
     const [orderID, setOrderID] = useState(undefined);
 
     const addressFrom = '0x82e5bdA141c120c4d8750Aec4bfeFfc89698F2ea';	
-    const addressTo = '0x1Df16Bba55D809d93Fb7D128a2DbF45F5ef38Af3';	
+    const addressTo = '0x1Df16Bba55D809d93Fb7D128a2DbF45F5ef38Af3';
 
     const connectToDexBook = async e => {
         e.preventDefault();
@@ -95,22 +95,22 @@ const HomePage = () => {
         setOrderBook(orderBook);
         ipfs.stop();
     }
-
+    
     return (
-        <>
-            <button onClick={connectToDexBook}>connect Dex</button>
-            <p>bookSize: {bookSize === undefined ? 'no data' : bookSize}</p>
-            <p>currencyBookSize: {currencyBookSize === undefined ? 'no data' : currencyBookSize}</p>
-            <p>==test for transactions==</p>
-            <button onClick={newOrder}>new Order</button>
-            <p>orderID: {orderID === undefined ? 'no data' : orderID}</p>
-            <button onClick={cancelOrder}>cancel Order</button>
-            <button onClick={fillOrder}>fill Order</button>
-            <p>==IPFS==</p>
-            <button onClick={loadOrderBook}>test IPFS</button>
-            <p>{orderBook === undefined ? '' : orderBook['0x00010002']['1'].price}</p>
-        </>
-    );
+            <TestSection>
+                <button onClick={connectToDexBook}>connect Dex</button>
+                <p>bookSize: {bookSize === undefined ? 'no data' : bookSize}</p>
+                <p>currencyBookSize: {currencyBookSize === undefined ? 'no data' : currencyBookSize}</p>
+                <p>==test for transactions==</p>
+                <button onClick={newOrder}>new Order</button>
+                <p>orderID: {orderID === undefined ? 'no data' : orderID}</p>
+                <button onClick={cancelOrder}>cancel Order</button>
+                <button onClick={fillOrder}>fill Order</button>
+                <p>==IPFS==</p>
+                <button onClick={loadOrderBook}>test IPFS</button>
+                <p>{orderBook === undefined ? '' : orderBook['0x00010002']['1'].price}</p>
+            </TestSection>
+    )
 }
 
-export default HomePage
+export default Testsection

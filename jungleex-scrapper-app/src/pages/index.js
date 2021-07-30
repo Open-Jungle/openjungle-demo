@@ -3,6 +3,7 @@ import detectEthereumProvider from '@metamask/detect-provider';
 import { ethers } from 'ethers';
 
 const HomePage = () => {
+
     var orderBook = {};
     var currencyBook = {};
     var chartData = {};
@@ -27,7 +28,7 @@ const HomePage = () => {
                     // set currency
                     var currency = {
                         "address": "0x" + events[i].data.substring(26,66),
-                        "name": hex_to_ascii("0x" + events[i].data.substring(258)),
+                        "name": hex_to_ascii("0x" + events[i].data.substring(258)).substring(33,36),
                         "oneMinusFees": parseInt("0x" + events[i].data.substring(130,194)),
                         "decimals": parseInt("0x" + events[i].data.substring(194, 258))
                     }
@@ -69,13 +70,16 @@ const HomePage = () => {
                     chartData[pair].blocks.push(parseInt(events[i].blockNumber));
                     chartData[pair].prices.push(parseInt("0x" + events[i].data.substring(66)));
                     break;
+                    default:
+                        alert('this should not happen');
+                    break;
                 }
 
                 
             }
-            console.log(orderBook);
-            console.log(chartData);
-            console.log(currencyBook);
+            console.log(JSON.stringify(orderBook));
+            console.log(JSON.stringify(currencyBook));
+            console.log(JSON.stringify(chartData));
         }).catch(function(err){
             console.log(err);
         });

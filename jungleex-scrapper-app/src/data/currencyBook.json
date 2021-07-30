@@ -1,8 +1,0 @@
-{
-    "0x0001":{
-        "address": "0x000",
-        "name": "tok1",
-        "oneMinusFees": 100000,
-        "decimals": 18
-    }
-}
