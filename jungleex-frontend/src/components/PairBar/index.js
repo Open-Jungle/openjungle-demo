@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react'
-import Select from 'react-select'
+import React, { useState, useEffect } from 'react';
 
 import { 
     Bar,
     PairSelector,
     PairInfoDisplay,
-    PairInfoItem
-} from './pairBarElements'
+    PairInfoItem,
+    PairSelectorTitle
+} from './pairBarElements';
 
-const PairBar = ({currencyBook}) => {
+import DropdownFrom from '../Dropdowns/DropdownFrom';
+import DropdownTo from '../Dropdowns/DropdownTo';
+
+const PairBar = ({currencyBook, setCurrencyFrom, setCurrencyTo}) => {
     const [menu, setMenu] = useState([]);
 
     useEffect(() => {
@@ -16,21 +19,25 @@ const PairBar = ({currencyBook}) => {
             var m = [];
             if(book){
                 for(var i in book){
-                    m.push({value:i, label: book[i].name});
+                    m.push(
+                        book[i].name
+                    );
                 }
             }
             setMenu(m);
         }
         bookToOPtions(currencyBook);
-    }, [currencyBook])
+    }, [currencyBook]);
 
 
     return (
         <Bar>
             <PairSelector>
-                Pair
-                <Select options={menu} />
-                <Select options={menu} />
+                <PairSelectorTitle>
+                    Pair
+                </PairSelectorTitle>
+                <DropdownFrom options={menu} setCurrencyFrom={setCurrencyFrom}/>
+                <DropdownTo options={menu} setCurrencyTo={setCurrencyTo}/>
             </PairSelector>
             <PairInfoDisplay>
                 <PairInfoItem>

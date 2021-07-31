@@ -114,7 +114,7 @@ const HomePage = () => {
         }
     }
 
-    function hex_to_ascii(str1) {
+    const hex_to_ascii = (str1) => {
         var hex  = str1.toString();
         var str = '';
         for (var n = 0; n < hex.length; n += 2) {
