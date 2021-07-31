@@ -39,14 +39,14 @@ const PairBar = ({currencyBook, setCurrencyFrom, setCurrencyTo}) => {
                 <DropdownFrom options={menu} setCurrencyFrom={setCurrencyFrom}/>
                 <DropdownTo options={menu} setCurrencyTo={setCurrencyTo}/>
             </PairSelector>
-            <PairInfoDisplay>
+            {/* <PairInfoDisplay>
                 <PairInfoItem>
                     Last Price:
                 </PairInfoItem>
                 <PairInfoItem>
                     Amount of orders:
                 </PairInfoItem>
-            </PairInfoDisplay>
+            </PairInfoDisplay> */}
         </Bar>
     )
 }

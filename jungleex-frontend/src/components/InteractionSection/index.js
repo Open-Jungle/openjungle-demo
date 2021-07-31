@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {FaArrowRight, FaSearch} from 'react-icons/fa';
 
 import getContract from '../../contracts/getContract';
-import detectEthereumProvider from '@metamask/detect-provider';
-import { ethers } from 'ethers';
 
 import {
     InteractionSectionWrapper,
@@ -35,6 +33,8 @@ const InteractionSection = ({
                     setSelectedOrder
                 }) => {
     
+    const {parseEther} = require("@ethersproject/units");
+
     const [isNew, setIsNew] = useState(true);
     const [isCancel, setIsCancel] = useState(false);
     const [isFill, setIsFill] = useState(false);
@@ -42,7 +42,6 @@ const InteractionSection = ({
     const toggleCancel = () => {setIsNew(false);setIsCancel(true);setIsFill(false)};
     const toggleFill = () => {setIsNew(false);setIsCancel(false);setIsFill(true)};
 
-    const [orderID, setOrderID] = useState(undefined);
     const [amount, setAmount] = useState(0);
     const [price, setPrice] = useState(0);
     const [status, setStatus] = useState('');
@@ -55,12 +54,12 @@ const InteractionSection = ({
         }
         setStatus('Confirm Approval');
         const { contract } = await getContract(currencyBook[currencyNameToID(currencyFrom)].address);
-        const approve = await contract.approve('0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9', amount * (10 ** currencyBook[currencyNameToID(currencyFrom)].decimals));
+        const approve = await contract.approve('0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9', parseEther((amount * (10 ** currencyBook[currencyNameToID(currencyFrom)].decimals)).toString()));
         setStatus('Awaiting Approval');
         await approve.wait();
 
         setStatus('Confirm Transaction');
-        const newOrder = await dexBook.newOrder(currencyNameToID(currencyFrom), currencyNameToID(currencyTo), amount * (10 ** currencyBook[currencyNameToID(currencyFrom)].decimals), price);
+        const newOrder = await dexBook.newOrder(currencyNameToID(currencyFrom), currencyNameToID(currencyTo), parseEther((amount * (10 ** currencyBook[currencyNameToID(currencyFrom)]).decimals).toString()), price);
         setStatus('Awaiting Transaction');
         await newOrder.wait();
         setStatus('Order Is Live');
@@ -74,7 +73,7 @@ const InteractionSection = ({
         }
         setStatus('Confirm Approval');
         const { contract } = await getContract(currencyBook[parseInt(selectedOrder[2].currencyIDTo)].address);
-        const approve = await contract.approve('0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9', selectedOrder[2].amount * selectedOrder[2].price);
+        const approve = await contract.approve('0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9', parseEther((selectedOrder[2].amount * selectedOrder[2].price).toString()));
         setStatus('Awaiting Approval');
         await approve.wait();
 

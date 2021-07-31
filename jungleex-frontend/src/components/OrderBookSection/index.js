@@ -13,11 +13,20 @@ const OrderBookSection = ({
                     setRefresh,
                     refresh,
                     getOrderById,
+                    currencyNameToID,
+                    currencyBook
                 }) => {
     const [filteredBook, setFilteredBook] = useState(undefined);
     
-    
     useEffect(() => {
+        const currencyNameToID = (name) => {
+            for(var i in currencyBook){
+                if(currencyBook[i].name === name){
+                    return i;
+                }
+            }
+        }
+
         function filterBook(currencyFrom, currencyTo, orderBook){
             const padHexPair = (hexFrom, hexTo) => {
                 return '0x'+'00000000000000000000000000000000'.substring(0, 32 - hexFrom.length) + hexFrom + '00000000000000000000000000000000'.substring(0, 32 - hexTo.length) + hexTo;
@@ -38,9 +47,9 @@ const OrderBookSection = ({
                 setFilteredBook(filteredBook);
             }
         };
-        filterBook(currencyFrom, currencyTo, orderBook);
+        filterBook(currencyNameToID(currencyFrom), currencyNameToID(currencyTo), orderBook);
         setRefresh(true);
-    }, [currencyFrom, currencyTo, orderBook, setRefresh, refresh])
+    }, [currencyFrom, currencyTo, orderBook, setRefresh, refresh, currencyBook])
 
     const onOptionClicked = value => () => {
         setSelectedOrder(getOrderById(value));

@@ -6,3 +6,8 @@ export const ChartSectionWrapper = styled.div`
     height: 200px;
     width: 34%;
 `;
+
+export const Chart = styled.div`
+    width: 100%,
+    height: 100%,
+`;

@@ -19,7 +19,7 @@ import {
 import TestSection from '../../components/TestSection';
 
 const ExchangePage = ({ dexBook }) => {
-    const dexBookDataIPFSHash = 'Qmb4YgXbRjipmf5hgkpcL5fT8b41nXG9NXPoq5qzyT459x';
+    const dexBookDataIPFSHash = 'QmRiiDoRDPDRwcWvhB5diHFg3kB6djbLVsQfTiFQeJkrYK';
 
     //data
     const [dexBookData, setDexBookData] = useState(undefined);
@@ -27,7 +27,7 @@ const ExchangePage = ({ dexBook }) => {
     const [currencyBook, setCurrencyBook] = useState(undefined);
     const [orderBook, setOrderBook] = useState(undefined);
     const [upToBlock, setUpToBlock] = useState(11042349);
-    const [refreshInterval, setRefreshInterval] = useState(15000);
+    const [refreshInterval] = useState(15000);
 
     //selections
     const [currencyFrom, setCurrencyFrom] = useState(undefined);
@@ -159,8 +159,6 @@ const ExchangePage = ({ dexBook }) => {
                             alert('this should not happen');
                         break;
                     }
-
-                    
                 }
                 setOrderBook(tempOrderBook);
                 setCurrencyBook(tempCurrencyBook);
@@ -179,12 +177,13 @@ const ExchangePage = ({ dexBook }) => {
                 return i;
             }
         }
+        return undefined;
     }
 
     const getOrderById = (id) => {
         for(var i in orderBook){
             for(var ii in orderBook[i]){
-                if(ii == id){
+                if(ii === id){
                     return [i, ii, orderBook[i][ii]]
                 }
             }
@@ -222,22 +221,36 @@ const ExchangePage = ({ dexBook }) => {
                     setSelectedOrder={setSelectedOrder}
                 />
                 <OrderBookSection
-                    currencyFrom={currencyNameToID(currencyFrom)}
-                    currencyTo={currencyNameToID(currencyTo)}
+                    currencyFrom={currencyFrom}
+                    currencyTo={currencyTo}
+                    currencyNameToID={currencyNameToID}
+                    currencyBook={currencyBook}
                     orderBook={orderBook}
                     setSelectedOrder={setSelectedOrder}
                     getOrderById={getOrderById}
                     refresh={refresh}
                     setRefresh={setRefresh}
                 />
+                
+                
             </FirstRow>
            
             <SecondRow>
-                <ChartSection />
-                <BalOrderSection />
+                <ChartSection 
+                    currencyFrom={currencyNameToID(currencyFrom)}
+                    currencyTo={currencyNameToID(currencyTo)}
+                    chartData={chartData}
+                    currencyBook={currencyBook}
+                    refresh={refresh} 
+                />
+                <BalOrderSection 
+                    currencyBook={currencyBook}
+                    refresh={refresh}
+                    setSelectedOrder={setSelectedOrder}
+                    getOrderById={getOrderById}
+                    orderBook={orderBook}
+                />
             </SecondRow>
-
-            <TestSection />
         </>
     );
 }

@@ -71,7 +71,7 @@ contract dexBook {
     );
     event OrderCanceled(
         address indexed owner,
-        bytes32 indexed pair,
+        bytes32 indexed pair, //'currencyIDFrom' + 'currencyIDTo';
         uint256 indexed orderID
     );
     event OrderFilled(
@@ -84,7 +84,9 @@ contract dexBook {
     event SetNewCurrency(
         bytes16 indexed currencyID,
         address contractAddress,
-        string currencyName
+        string currencyName,
+        uint32 oneMinusFees,
+        uint8 decimals
     );
     
     constructor(){
@@ -132,10 +134,20 @@ contract dexBook {
         require(_orderBook[orderID].owner != address(0), "This order does not exist");
         require(_orderBook[orderID].owner == msg.sender, "Only owner can cancel order");
         
+        uint256 orderAmount = _orderBook[orderID].amount;
+        
+        if(_currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals > _currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals){
+            orderAmount = _orderBook[orderID].amount / 10 ** (_currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals - _currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals);
+        }else{
+            orderAmount = _orderBook[orderID].amount * 10 ** (_currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals - _currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals);
+        }
+        
         IBEP20 contractFrom = IBEP20(_currencyBook[_orderBook[orderID].currencyIDFrom].contractAddress);
-        contractFrom.transfer(_orderBook[orderID].owner, _orderBook[orderID].amount);
+        contractFrom.transfer(_orderBook[orderID].owner, orderAmount);
         
         emit OrderCanceled(msg.sender, mkpair(_orderBook[orderID].currencyIDFrom, _orderBook[orderID].currencyIDTo), orderID);
+        
+        
         
         delete _orderBook[orderID];
         _orderBookSize = _orderBookSize - 1;
@@ -148,8 +160,16 @@ contract dexBook {
         IBEP20 contractFrom = IBEP20(_currencyBook[_orderBook[orderID].currencyIDFrom].contractAddress);
         require(contractTo.allowance(msg.sender, address(this)) >= _orderBook[orderID].amount, "Not enough allowance");
         
+        uint256 orderAmount = _orderBook[orderID].amount;
+        
+        if(_currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals > _currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals){
+            orderAmount = _orderBook[orderID].amount / 10 ** (_currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals - _currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals);
+        }else{
+            orderAmount = _orderBook[orderID].amount * (10 ** (_currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals - _currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals));
+        }
+        
         contractTo.transferFrom(msg.sender, address(this), _orderBook[orderID].amount * _orderBook[orderID].price);
-        contractFrom.transfer(msg.sender, _orderBook[orderID].amount);
+        contractFrom.transfer(msg.sender, orderAmount);
 
         _orderBookSize = _orderBookSize - 1;
         
@@ -183,7 +203,7 @@ contract dexBook {
         );
     }
     
-    function setCurrency(string memory name, address contractAddress, uint256 oneMinusFees, uint256 decimals) public returns (uint128){
+    function setCurrency(string memory name, address contractAddress, uint32 oneMinusFees, uint8 decimals) public returns (uint128){
         require(msg.sender == _dexOwner, "Only owner function");
         require(_currencyID[contractAddress] == bytes16(0), "This currency is already set");
         _currencyBook[bytes16(_nextCurrencyID)] = currency({
@@ -196,7 +216,7 @@ contract dexBook {
         _currencyID[contractAddress] = bytes16(_nextCurrencyID);
         
         _currencyBookSize = _currencyBookSize + 1;
-        emit SetNewCurrency(bytes16(_nextCurrencyID), contractAddress, name);
+        emit SetNewCurrency(bytes16(_nextCurrencyID), contractAddress, name, oneMinusFees, decimals);
         _nextCurrencyID = _nextCurrencyID + 1;
         return _nextCurrencyID - 1;
     }
