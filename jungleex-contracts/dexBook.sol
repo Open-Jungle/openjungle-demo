@@ -15,44 +15,26 @@ interface IBEP20 {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
-library Strings {
-    function toString(uint256 value) internal pure returns (string memory) {
-        if (value == 0) { return "0"; }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
-    }
-}
    
 contract dexBook {
-    // do some edits
-    using Strings for uint256;
     
     struct order {
         address owner;
-        bytes16 currencyIDFrom;
-        bytes16 currencyIDTo;
-        uint256 amount;
-        uint256 price;
+        address currencyFrom;
+        address currencyTo;
+        uint256 amountFrom;
+        uint256 amountTo;
+        uint256 price; // price has 16 decimals 
     }
     
     struct currency {
-        address contractAddress;
-        string name;
-        uint256 oneMinusFees; // the % of a transaction that reach the address after the fees (0,95000) = 95000
-        uint256 decimals;
+        uint256 currencyID;
+        uint256 oneMinusFees; // |16 decimals| the % of a transaction that reach the address after the fees (0,95000..) = 09500000000000000
+        uint8 decimals;
+        bytes32 iconIPFSLocation;  // dont forget to change "0x" -> "0x1220" before going back to base58
     }
+    
+    uint256 constant SIXTEEN_DECIMALS_ONE = 10000000000000000;
     
     address private _dexOwner;
     uint256 private _nextOrderID;
@@ -60,34 +42,33 @@ contract dexBook {
     uint256 private _orderBookSize;
     uint256 private _currencyBookSize;
     mapping(uint256 => order) private _orderBook;
-    mapping(bytes16 => currency) private _currencyBook;
-    mapping(address => bytes16) private _currencyID;
+    mapping(address => currency) private _currencyBook;
+    mapping(uint256 => address) private _currencyID;
     
     event OrderCreated(
         address indexed owner,
-        bytes32 indexed pair, //'currencyIDFrom' + 'currencyIDTo';
-        uint256 amount,
+        address currencyFrom,
+        address currencyTo,
+        uint256 amountFrom,
         uint256 price,
         uint256 indexed orderID
     );
     event OrderCanceled(
         address indexed owner,
-        bytes32 indexed pair, //'currencyIDFrom' + 'currencyIDTo';
         uint256 indexed orderID
     );
     event OrderFilled(
+        address indexed owner,
         address indexed buyer,
-        bytes32 indexed pair, //'currencyIDFrom' + 'currencyIDTo';
-        uint256 amount,
-        uint256 price,
+        uint256 amountTo,
         uint256 indexed orderID
     );
     event SetNewCurrency(
-        bytes16 indexed currencyID,
+        address indexed msgSender,
+        uint256 indexed currencyID,
         address contractAddress,
-        string currencyName,
-        uint32 oneMinusFees,
-        uint8 decimals
+        uint256 oneMinusFees,
+        bytes32 iconIPFSLocation
     );
     
     constructor(){
@@ -98,153 +79,192 @@ contract dexBook {
         _currencyBookSize = 0;
     }
     
-    function newOrder(uint128 currencyIDFrom, uint128 currencyIDTo, uint256 orderAmount, uint256 orderPrice) public {
-        require(isApprovedCurrencyID(bytes16(currencyIDFrom)) && isApprovedCurrencyID(bytes16(currencyIDTo)), "This currency pair is not supported");
-        IBEP20 contractFrom = IBEP20(_currencyBook[bytes16(currencyIDFrom)].contractAddress);
-        require(contractFrom.allowance(msg.sender, address(this)) >= orderAmount, "Not enough allowance");
-        contractFrom.transferFrom(msg.sender, address(this), orderAmount);
+    function newOrder(address currencyFrom, address currencyTo, uint256 orderAmount, uint256 orderPrice) external returns (bool) {
         
-        if(_currencyBook[bytes16(currencyIDTo)].decimals > _currencyBook[bytes16(currencyIDFrom)].decimals){
-            orderAmount = orderAmount * 10 ** (_currencyBook[bytes16(currencyIDTo)].decimals - _currencyBook[bytes16(currencyIDFrom)].decimals);
+        // verify that both address of currencyFrom and currencyTo are valid currency
+        require(
+            _currencyBook[currencyFrom].currencyID != uint256(0) && 
+            _currencyBook[currencyTo].currencyID != uint256(0), 
+                "This currency pair is not supported"
+        );
+        
+        // create an instance of IBEP20 pointing to the currencyFrom contract
+        IBEP20 contractFrom = IBEP20(currencyFrom);
+        
+        // verify that the msg.sender has already allowed the dexBook to spend his tokens
+        require(contractFrom.allowance(msg.sender, address(this)) >= orderAmount, "Not enough allowance");
+        
+        // Transfer the tokens from the msg.sender address to the contract address
+        require(contractFrom.transferFrom(msg.sender, address(this), orderAmount));
+        
+        // Calculate the true amount that made it to the contracts address
+        uint256 amountFrom = orderAmount * _currencyBook[currencyFrom].oneMinusFees / SIXTEEN_DECIMALS_ONE;
+        
+        // Calculate the ajusted decimal diff
+        uint256 decimalAdjustedAmountFrom;
+        if(_currencyBook[currencyTo].decimals > _currencyBook[currencyFrom].decimals){
+            decimalAdjustedAmountFrom = amountFrom * 10 ** (_currencyBook[currencyTo].decimals - _currencyBook[currencyFrom].decimals);
         }else{
-            orderAmount = orderAmount / 10 ** (_currencyBook[bytes16(currencyIDFrom)].decimals - _currencyBook[bytes16(currencyIDTo)].decimals);
+            decimalAdjustedAmountFrom = amountFrom / 10 ** (_currencyBook[currencyFrom].decimals - _currencyBook[currencyTo].decimals);
         }
         
+        // Calculate the expected amountTo
+        uint256 amountTo = decimalAdjustedAmountFrom * orderPrice / SIXTEEN_DECIMALS_ONE;
+        
+        // create the nre order
         _orderBook[_nextOrderID] = order({
             owner: msg.sender,
-            currencyIDFrom: bytes16(currencyIDFrom),
-            currencyIDTo: bytes16(currencyIDTo),
-            amount: orderAmount * _currencyBook[bytes16(currencyIDFrom)].oneMinusFees / uint256(100000),
+            currencyFrom: currencyFrom,
+            currencyTo: currencyTo,
+            amountFrom: amountFrom,
+            amountTo: amountTo,
             price: orderPrice
         });
         
+        // increment book size
         _orderBookSize = _orderBookSize + 1;
         
+        // emit log
         emit OrderCreated(
             msg.sender, 
-            mkpair(bytes16(currencyIDFrom), bytes16(currencyIDTo)), 
-            orderAmount * _currencyBook[bytes16(currencyIDFrom)].oneMinusFees / uint256(100000), 
+            currencyFrom,
+            currencyTo,
+            amountFrom,
             orderPrice, 
             _nextOrderID
         );
         
+        // increment order ID
         _nextOrderID = _nextOrderID + 1;
+        
+        // return success result
+        return true;
     }
     
-    function cancelOrder(uint256 orderID) public {
-        require(_orderBook[orderID].owner != address(0), "This order does not exist");
-        require(_orderBook[orderID].owner == msg.sender, "Only owner can cancel order");
+    function cancelOrder(uint256 orderID) external returns (bool) {
         
-        uint256 orderAmount = _orderBook[orderID].amount;
+        // create copy of order for quick access
+        order storage temp = _orderBook[orderID];
         
-        if(_currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals > _currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals){
-            orderAmount = _orderBook[orderID].amount / 10 ** (_currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals - _currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals);
-        }else{
-            orderAmount = _orderBook[orderID].amount * 10 ** (_currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals - _currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals);
-        }
+        // check requirements
+        require(temp.owner != address(0), "This order does not exist");
+        require(temp.owner == msg.sender, "Only owner can cancel order");
         
-        IBEP20 contractFrom = IBEP20(_currencyBook[_orderBook[orderID].currencyIDFrom].contractAddress);
-        contractFrom.transfer(_orderBook[orderID].owner, orderAmount);
-        
-        emit OrderCanceled(msg.sender, mkpair(_orderBook[orderID].currencyIDFrom, _orderBook[orderID].currencyIDTo), orderID);
-        
-        
-        
+        // delete the order to prevent reentrancy
         delete _orderBook[orderID];
+        
+        // cretate instance of currencyFrom contract interface
+        IBEP20 contractFrom = IBEP20(temp.currencyFrom);
+        
+        // refund the order
+        require(contractFrom.transfer(msg.sender, _orderBook[orderID].amountFrom), "Failed to refund.. you in trouble");
+        
+        //emit event
+        emit OrderCanceled(msg.sender, orderID);
+        
+        // reduce book size 
         _orderBookSize = _orderBookSize - 1;
         
+        // return success result
+        return true;
     }
     
-    function fillOrder(uint256 orderID) public {
-        require(_orderBook[orderID].owner != address(0), "This order does not exist");
-        IBEP20 contractTo = IBEP20(_currencyBook[_orderBook[orderID].currencyIDTo].contractAddress);
-        IBEP20 contractFrom = IBEP20(_currencyBook[_orderBook[orderID].currencyIDFrom].contractAddress);
-        require(contractTo.allowance(msg.sender, address(this)) >= _orderBook[orderID].amount, "Not enough allowance");
+    function fillOrder(uint256 orderID) external returns (bool) {
         
-        uint256 orderAmount = _orderBook[orderID].amount;
+        // create copy of order for quick access
+        order storage temp = _orderBook[orderID];
         
-        if(_currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals > _currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals){
-            orderAmount = _orderBook[orderID].amount / 10 ** (_currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals - _currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals);
-        }else{
-            orderAmount = _orderBook[orderID].amount * (10 ** (_currencyBook[bytes16(_orderBook[orderID].currencyIDFrom)].decimals - _currencyBook[bytes16(_orderBook[orderID].currencyIDTo)].decimals));
-        }
+        // do some requirements
+        require(temp.owner != address(0), "This order does not exist");
+        require(temp.owner != msg.sender, "Can't fill your own order");
         
-        contractTo.transferFrom(msg.sender, address(this), _orderBook[orderID].amount * _orderBook[orderID].price);
-        contractFrom.transfer(msg.sender, orderAmount);
+        // cretate instance of currencyTo contract interface
+        IBEP20 contractTo = IBEP20(temp.currencyTo);
+        
+        // verify that allowance is high enought to execute trade
+        require(contractTo.allowance(msg.sender, address(this)) >= temp.amountTo, "Not enough allowance");
+        
+        // delete the order to prevent reentrancy
+        delete _orderBook[orderID];
+        
+        // cretate instance of currencyFrom contract interface
+        IBEP20 contractFrom = IBEP20(temp.currencyFrom);
+        
+        // make the transfert between user from and user to
+        contractTo.transferFrom(msg.sender, temp.owner, temp.amountTo);
+        
+        // send the balance from the contract to the filler (user to)
+        contractFrom.transfer(msg.sender, temp.amountFrom);
 
-        _orderBookSize = _orderBookSize - 1;
-        
+        // emit the logs
         emit OrderFilled(
+            temp.owner,
             msg.sender,
-            mkpair(_orderBook[orderID].currencyIDFrom, _orderBook[orderID].currencyIDTo),
-            _orderBook[orderID].amount,
-            _orderBook[orderID].price,
+            temp.amountTo,
             orderID
         );
         
-        delete _orderBook[orderID];
+        // decrement book size
+        _orderBookSize = _orderBookSize - 1;
+        
+        // return success result
+        return true;
     }
     
-    function isApprovedCurrencyID(bytes16 currencyID) public view returns (bool) {
-        return (_currencyBook[currencyID].contractAddress != address(0));
-    }
-    
-    function getCurrencyByAddress(address contractAddress) public view returns (bytes16) {
-        require(_currencyID[contractAddress] != bytes16(0), "This currency does not exist");
-        return _currencyID[contractAddress];
-    }
-    
-    function getCurrencyByID(uint128 currencyID) public view returns (bytes memory) {
-        require(_currencyBook[bytes16(currencyID)].contractAddress != address(0), "This currency ID does not exist");
-        return abi.encodePacked(
-            " Contract Address: ", _currencyBook[bytes16(currencyID)].contractAddress,
-            " Name: ", _currencyBook[bytes16(currencyID)].name,
-            " OneMinusFees: ", _currencyBook[bytes16(currencyID)].oneMinusFees,
-            " decimals: ", _currencyBook[bytes16(currencyID)].decimals
-        );
-    }
-    
-    function setCurrency(string memory name, address contractAddress, uint32 oneMinusFees, uint8 decimals) public returns (uint128){
+    function setCurrency(address contractAddress, uint256 oneMinusFees, bytes32 iconIPFSLocation) external returns (bool){
+        
+        // check requirements
         require(msg.sender == _dexOwner, "Only owner function");
-        require(_currencyID[contractAddress] == bytes16(0), "This currency is already set");
-        _currencyBook[bytes16(_nextCurrencyID)] = currency({
-                                                        contractAddress: contractAddress, 
-                                                        name: name,
-                                                        oneMinusFees: oneMinusFees,
-                                                        decimals: decimals
-                                                  });
+        require(_currencyBook[contractAddress].currencyID == uint256(0), "This currency is already set");
         
-        _currencyID[contractAddress] = bytes16(_nextCurrencyID);
+        // cretate instance of the new contract interface
+        IBEP20 newContract = IBEP20(contractAddress);
         
-        _currencyBookSize = _currencyBookSize + 1;
-        emit SetNewCurrency(bytes16(_nextCurrencyID), contractAddress, name, oneMinusFees, decimals);
-        _nextCurrencyID = _nextCurrencyID + 1;
-        return _nextCurrencyID - 1;
-    }
-    
-    function getOrder(uint256 orderID) public view returns (bytes memory) {
-        require(_orderBook[orderID].owner != address(0), "This order does not exist");
+        // create the new currency
+        _currencyBook[contractAddress] = currency({
+            currencyID: _nextCurrencyID,
+            oneMinusFees: oneMinusFees,
+            decimals: newContract.decimals(),
+            iconIPFSLocation: iconIPFSLocation
+        });
         
-        return abi.encodePacked(
-            " Owner: ", _orderBook[orderID].owner,
-            " Token From: ", _orderBook[orderID].currencyIDFrom,
-            " Token To: ", _orderBook[orderID].currencyIDTo,
-            " Amount: ", _orderBook[orderID].amount.toString(),
-            " Price: ",_orderBook[orderID].price.toString()
+        // save the currency ID
+        _currencyID[_nextCurrencyID] = contractAddress;
+        
+        // emit logs
+        emit SetNewCurrency(
+            msg.sender,
+            _nextCurrencyID,
+            contractAddress, 
+            oneMinusFees,
+            iconIPFSLocation
         );
+        
+        // increment counters
+        _nextCurrencyID = _nextCurrencyID + 1;
+        _currencyBookSize = _currencyBookSize + 1;
+        
+        // return success result
+        return true;
     }
     
-    function getOrderBookSize() public view returns (uint256) {
-        return _orderBookSize;
-    }
+    // Getters for currency
+    function getCurrencyAddress(uint128 currencyID) external view returns (address) { return _currencyID[currencyID]; }
+    function getCurrencyID(address contractAddress) external view returns (uint256) { return _currencyBook[contractAddress].currencyID; }
+    function getCurrencyOneMinusFees(address contractAddress) external view returns (uint256) { return _currencyBook[contractAddress].oneMinusFees; }
+    function getCurrencyIconLocation(address contractAddress) external view returns (bytes32) { return _currencyBook[contractAddress].iconIPFSLocation; }
     
-    function getCurrencyBookSize() public view returns (uint256) {
-        return _currencyBookSize;
-    }
+    // Getters for Orders
+    function getOrderOwner(uint256 orderID) external view returns (address) { return _orderBook[orderID].owner; }
+    function getOrderCurrencyFrom(uint256 orderID) external view returns (address) { return _orderBook[orderID].currencyFrom; }
+    function getOrderCurrencyTo(uint256 orderID) external view returns (address) { return _orderBook[orderID].currencyTo; }
+    function getOrderAmountFrom(uint256 orderID) external view returns (uint256) { return _orderBook[orderID].amountFrom; }
+    function getOrderAmountTo(uint256 orderID) external view returns (uint256) { return _orderBook[orderID].amountTo; }
+    function getOrderPrice(uint256 orderID) external view returns (uint256) { return _orderBook[orderID].price; }
     
-    function mkpair (bytes16 a, bytes16 b) internal pure returns (bytes32) {
-        return bytes32 (uint256 (uint128 (a)) << 128 | uint128 (b));
-    }
+    // general getters
+    function getOrderBookSize() external view returns (uint256) { return _orderBookSize; }
+    function getCurrencyBookSize() external view returns (uint256) { return _currencyBookSize; }
 }
 
 
