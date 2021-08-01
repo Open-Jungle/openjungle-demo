@@ -19,29 +19,48 @@ interface IBEP20 {
 contract dexBook {
     
     struct order {
-        address owner;
+        address owner; // msgSender of the newOrder call that created this order
         address currencyFrom;
         address currencyTo;
-        uint256 amountFrom;
-        uint256 amountTo;
-        uint256 price; // price has 16 decimals 
+        uint256 amountFrom; // Should have the decimals of 'currencyFrom'
+        uint256 amountTo; // should have the decimals of 'currencyTo'
+        uint256 price; // |16 decimals| 
     }
     
     struct currency {
         uint256 currencyID;
-        uint256 oneMinusFees; // |16 decimals| the % of a transaction that reach the address after the fees (0,95000..) = 09500000000000000
-        uint8 decimals;
-        bytes32 iconIPFSLocation;  // dont forget to change "0x" -> "0x1220" before going back to base58
+        /* one minus fee represents the % of a transaction amount that actualy reachs the 
+         * address of 'recipient' in a transaction call. Most coins in the new tokenomicks 
+         * have fees like 5% of each transaction goes to burn. In such a case, only 95% of 
+         * amount reaches recipient. oneMinusFees would then equal 9500000000000000 
+         */
+        uint256 oneMinusFees; // |16 decimals|
+        uint8 decimals; // is here for quicker access even if the information exists elsewhere
+        bytes32 iconIPFSLocation; // Needs prefix "0x1220" before going back to base58
     }
     
-    uint256 constant SIXTEEN_DECIMALS_ONE = 10000000000000000;
+    // constants
+    uint256 constant SIXTEEN_DECIMALS_ONE = 10000000000000000; // use to manipulate 16 decimals numbers
+    bytes2 constant IPFS_PREFIX = 0x1220; // to had before every IPFS storage location
     
+    // pointer to the off-chain decentralized storage
+    bytes32 private _dataIPFSLocation;
+    
+    // onwer and in the future here will be the governance contract address
     address private _dexOwner;
+    
+    // counters
     uint256 private _nextOrderID;
-    uint128 private _nextCurrencyID;
+    uint256 private _nextCurrencyID;
     uint256 private _orderBookSize;
     uint256 private _currencyBookSize;
+    
+    // orderbook top logic, every order is stored at its ID
     mapping(uint256 => order) private _orderBook;
+    
+    // currency Book top logic, for faster manipulation the currency are stored
+    // at their address location, allowing to take directly the address as arguments
+    // in most funcions. An other mapping allow to find the currency by its ID
     mapping(address => currency) private _currencyBook;
     mapping(uint256 => address) private _currencyID;
     
@@ -65,10 +84,19 @@ contract dexBook {
     );
     event SetNewCurrency(
         address indexed msgSender,
-        uint256 indexed currencyID,
-        address contractAddress,
+        address indexed contractAddress,
+        uint256 currencyID,
         uint256 oneMinusFees,
         bytes32 iconIPFSLocation
+    );
+    event SetCurrencyIcon(
+        address indexed msgSender,
+        address indexed contractAddress,
+        bytes32 iconIPFSLocation
+    );
+    event SetDataIPFSLocation(
+        address indexed msgSender,
+        bytes32 newDataIPFSLocation
     );
     
     constructor(){
@@ -234,8 +262,8 @@ contract dexBook {
         // emit logs
         emit SetNewCurrency(
             msg.sender,
-            _nextCurrencyID,
-            contractAddress, 
+            contractAddress,
+            _nextCurrencyID, 
             oneMinusFees,
             iconIPFSLocation
         );
@@ -245,6 +273,44 @@ contract dexBook {
         _currencyBookSize = _currencyBookSize + 1;
         
         // return success result
+        return true;
+    }
+    
+    function setCurrencyIcon(address contractAddress, bytes32 IPFSHash) external returns (bool) {
+        
+        // check requirements
+        require(msg.sender == _dexOwner, "Only owner function");
+        require(_currencyBook[contractAddress].currencyID != uint256(0), "This currency does not exist");
+        
+        // set the icon location
+        _currencyBook[contractAddress].iconIPFSLocation = IPFSHash;
+        
+        // emit log
+        emit SetCurrencyIcon(
+            msg.sender,
+            contractAddress,
+            IPFSHash
+        );
+        
+        // return success result
+        return true;
+    } 
+    
+    function setDataIPFSLocation(bytes32 newIPFSlocation) external returns (bool) {
+        
+        // check owner only function
+        require(msg.sender == _dexOwner, "Only owner function");
+        
+        // set the new data pointer
+        _dataIPFSLocation = newIPFSlocation;
+        
+        // emit the event
+        emit SetDataIPFSLocation(
+            msg.sender,
+            newIPFSlocation
+        );
+        
+        // return success
         return true;
     }
     
@@ -265,11 +331,6 @@ contract dexBook {
     // general getters
     function getOrderBookSize() external view returns (uint256) { return _orderBookSize; }
     function getCurrencyBookSize() external view returns (uint256) { return _currencyBookSize; }
+    function getDataIPFSLocation() external view returns (bytes32) { return _dataIPFSLocation; }
+    function getIPFSPrefix() external pure returns (bytes2) { return IPFS_PREFIX; }
 }
-
-
-
-
-
-
-
