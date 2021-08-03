@@ -1,31 +1,30 @@
 import detectEthereumProvider from '@metamask/detect-provider';
-import { ethers, Contract } from 'ethers';
-import dexBookABI from './dexBook.json';	
+import { ethers, Contract } from 'ethers';	
+import IBEP20ABI from './IBEP20ABI.json';	
 
-const getDexBook = () =>
+const getContract = (address) =>
     new Promise( async (resolve, reject) => {
         let provider = await detectEthereumProvider();
         if(provider) {
             await provider.request({ method: 'eth_requestAccounts' });
-            const networkId = await provider.request({ method: 'net_version' })
             provider = new ethers.providers.Web3Provider(provider);
             const signer = provider.getSigner();
-            let dexBook = undefined;
+            let contract = undefined;
             try {
-                dexBook = new Contract(
-                    dexBookABI.networks[networkId].address, 	
-                    dexBookABI.abi,										
+                contract = new Contract(
+                    address, 	
+                    IBEP20ABI.abi,										
                     signer
                 );
             } catch (TypeError) {}
-            if(dexBook === undefined){
+            if(contract === undefined){
                 alert('Try again with Binance Smart Chain!')
                 reject('Try again with Binance Smart Chain!');
             }
-            resolve({dexBook, provider});									
+            resolve({contract});									
             return;
         }
         reject('Install Metamask');
     });
 
-export default getDexBook;
+export default getContract;

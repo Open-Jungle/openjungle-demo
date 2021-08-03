@@ -1,133 +1,215 @@
-import React from 'react'
+import React, { useState } from 'react';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { ethers } from 'ethers';
 
+import getContract from '../utils/getContract'
+import getDexBook from '../utils/getDexBook'
+
 const HomePage = () => {
 
-    var orderBook = {};
-    var currencyBook = {};
-    var chartData = {};
+    const contractAddress = '0x21e71C0084b548EEE3b49F5E5a7C0650aCF504eE';
+    const deployementBlock = 11134377;
+    const SIXTEEN_DECIMALS_ONE = 10000000000000000;
+    
+    const [status, setStatus] = useState('Not started')
 
     const scrapper = async () => {
-        console.log("scrapping orders ...")
-        let provider = await detectEthereumProvider();
-        await provider.request({ method: 'eth_requestAccounts' });
-        provider = new ethers.providers.Web3Provider(provider);
+        
+        const start = Date.now();
+        let orderBook = {};
+        let currencyBook = {};
+        let chartData = {};
+        let latestBlock = deployementBlock;
+        let nbLogs = 0;
+        let filter = { address: contractAddress, fromBlock: deployementBlock };
 
-        var filter = {
-            address: '0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9',
-            fromBlock: 10000000
-        };
+        
+        setStatus("Connecting to provider");
+        //let provider = await detectEthereumProvider();
+        //await provider.request({ method: 'eth_requestAccounts' });
+        //provider = new ethers.providers.Web3Provider(provider);
+        const { dexBook, provider } = await getDexBook();
 
-        var callPromise = provider.getLogs(filter);
-        callPromise.then(function(events) {
-            for(var i in events){
+        
+        setStatus("scrapping logs ...");
+        let callPromise = provider.getLogs(filter);
+        callPromise.then( async function(events) {
+            for(let i in events){
                 switch(events[i].topics[0]){
-
-                    case "0x8b7c3b99fa246a94698cde11b32f366c6e0a7aad7a5be35b0a990203a77da18a":
-                    // set currency
-                    var currency = {
-                        "address": "0x" + events[i].data.substring(26,66),
-                        "name": hex_to_ascii("0x" + events[i].data.substring(258)).substring(33,36),
-                        "oneMinusFees": parseInt("0x" + events[i].data.substring(130,194)),
-                        "decimals": parseInt("0x" + events[i].data.substring(194, 258))
-                    }
-                    currencyBook[parseInt(events[i].topics[1].substring(0,34))] = currency;
-                    break;
-
-                    case "0x5278faed1185575ab8794d2f7094d533baa1889f86b34c254cc019ef59203bb5": 
-                    // new order
-                    if(orderBook[events[i].topics[2]] === undefined){
-                        orderBook[events[i].topics[2]] = {};
-                    }
-
-                    var order = {};
-                    order["owner"] = "0x" + events[i].topics[1].substring(26);
-                    order["currencyIDFrom"] = events[i].topics[2].substring(0,34);
-                    order["currencyIDTo"] = "0x" + events[i].topics[2].substring(34);
-                    order["amount"] = parseInt(events[i].data.substring(0,66));
-                    order["price"] = parseInt("0x" + events[i].data.substring(66));
-
-                    orderBook[events[i].topics[2]][parseInt(events[i].topics[3])] = order;
-                    break;
-
-                    case "0xcbfa7d191838ece7ba4783ca3a30afd316619b7f368094b57ee7ffde9a923db1":
-                    // cancel order
-                    delete orderBook[events[i].topics[2]][parseInt(events[i].topics[3])];
-                    break;
-
-                    case "0xda67fd5efd7c65cc617b4e30cdd2569c6c2b3d0034729f3c616c6a83b4520a8f":
-                    // fill order
-                    var pair = mkpair(events[i].topics[2].substring(0,34), "0x" + events[i].topics[2].substring(34));
-                    if(chartData[pair] === undefined){
-                        chartData[pair] = {
-                            blocks: [],
-                            prices: []
-                        }
-                    }
                     
-                    delete orderBook[events[i].topics[2]][parseInt(events[i].topics[3])];
-                    chartData[pair].blocks.push(parseInt(events[i].blockNumber));
-                    chartData[pair].prices.push(parseInt("0x" + events[i].data.substring(66)));
+                    // set currency
+                    case "0xa83d05db890d90e2c4fcbcda6dcaf7496ec6d876345654077a40b81d87fea5af":
+                        nbLogs = nbLogs + 1;
+                        setStatus("scrapping log nb: " + (nbLogs) + " Set Currency");
+
+                        var contractAddress = "0x" + events[i].topics[2].substring(26);
+                        const { contract } = await getContract(contractAddress);
+
+                        let currency = {
+                            "currencyID": parseInt(events[i].data.substring(0,66)),
+                            "name": await contract.name(),
+                            "symbol": await contract.symbol(),
+                            "oneMinusFees": parseInt("0x" + events[i].data.substring(66, 130)),
+                            "decimals": await contract.decimals(),
+                            "iconIPFSLocation": ethers.utils.base58.encode("0x1220" + events[i].data.substring(130))
+                        }
+                        currencyBook[contractAddress] = currency;
+
+                        latestBlock = events[i].blockNumber;
                     break;
+                    
+                    // new order
+                    case "0x29c530b05bef94e2779ef6c0fd084fea9cbfcad9a5a22811fe8a01e95f6acdb9": 
+                        nbLogs = nbLogs + 1;
+                        setStatus("scrapping log nb: " + (nbLogs) + " New Order");
+
+                        let currencyFrom = "0x" + events[i].data.substring(26,66);
+                        let currencyTo = "0x" + events[i].data.substring(90,130);
+                        let pair = currencyFrom + currencyTo;
+                        var orderID = parseInt(events[i].topics[2]);
+                        let amountTo = await dexBook.getOrderAmountTo(orderID)
+                        if(orderBook[pair] === undefined){ orderBook[pair] = {} }
+
+                        let order = {
+                            "owner": "0x" + events[i].topics[1].substring(26),
+                            "currencyFrom": currencyFrom,
+                            "currencyTo": currencyTo,
+                            "amountFrom": parseInt("0x" + events[i].data.substring(130, 194)),
+                            "amountTo": parseInt(amountTo.toString()),
+                            "price": parseInt("0x" + events[i].data.substring(194)) / SIXTEEN_DECIMALS_ONE
+                        };
+
+                        orderBook[pair][orderID] = order;
+
+                        latestBlock = events[i].blockNumber;
+                    break;
+                    
+                    // cancel order
+                    case "0xafe5d45b77c7cea746dab67e30e6ca60c00cec51787feb121441c48ec20e3e57":
+                        nbLogs = nbLogs + 1;
+                        setStatus("scrapping log nb: " + (nbLogs) + " Cancel Order");
+
+                        orderID = parseInt(events[i].topics[2]);
+                        for(let pair in orderBook){
+                            if(orderBook[pair][orderID] !== undefined) {
+                                delete orderBook[pair][orderID]
+                                latestBlock = events[i].blockNumber;
+                                break;
+                            }
+                        }
+                    break;
+                    
+                    // fill order
+                    case "0x4e359ed0bfd026757edbe34c77143705ed75e99be4048c6adf9a58f3c0db7211":
+                        nbLogs = nbLogs + 1;
+                        setStatus("scrapping log nb: " + (nbLogs) + " Fill Order");
+
+                        orderID = parseInt(events[i].topics[3]);
+                        for(let pair in orderBook){
+                            if(orderBook[pair][orderID] !== undefined) {
+
+                                const tickData  = await provider.getBlock(events[i].blockNumber);
+                                let tick = {
+                                    time: parseInt(tickData.timestamp+"000"), 
+                                    value: orderBook[pair][orderID].price
+                                };
+                                
+                                if(chartData[pair] === undefined) { chartData[pair] = [tick] }
+                                else {
+                                    let l = chartData[pair].length - 1;
+                                    for(let index in chartData[pair]){
+                                        let tryIndex = l - index;
+                                        if(chartData[pair][tryIndex].time <= tick.time){
+                                            chartData[pair].splice(tryIndex+1, 0, tick);
+                                            break;    
+                                        }
+                                    }
+                                }
+                                delete orderBook[pair][orderID];
+                                break;
+                            }
+                        }  
+                    break;
+
+                    // Set Currency Icon
+                    case "0x3c098e62c0feb3c01216f7e9358a236c2d15cf17d113e426c55b42e06b4ce3b1":
+                        nbLogs = nbLogs + 1;
+                        setStatus("scrapping log nb: " + (nbLogs) + " SetCurrency Icon");
+
+                        contractAddress = "0x" + events[i].topics[2].substring(26);
+                        currencyBook[contractAddress].iconIPFSLocation = ethers.utils.base58.encode("0x1220" + events[i].data.substring(2));
+                    break;
+
+                     // Set Main Data Location
+                    case "0xce825481561f2d9ff0108c267ccc1820f0a1f8d8920935c993ce8fbb59ddbbd3":
+                        nbLogs = nbLogs + 1;
+                        setStatus("scrapping log nb: " + (nbLogs) + " SetMainData");
+                    break;
+
                     default:
                         alert('this should not happen');
                     break;
                 }
-
-                
             }
-            console.log(JSON.stringify(orderBook));
-            console.log(JSON.stringify(currencyBook));
-            console.log(JSON.stringify(chartData));
+            document.getElementById('orderBook').innerHTML = JSON.stringify(orderBook);
+            document.getElementById('currencyBook').innerHTML = JSON.stringify(currencyBook);
+            document.getElementById('chartData').innerHTML = JSON.stringify(chartData);
+            document.getElementById('nbLogs').innerHTML = 'nbLogs: ' + nbLogs;
+            document.getElementById('latestBlock').innerHTML = 'latestBlock: ' + latestBlock;
+            document.getElementById('scrapeTime').innerHTML = 'scrapeTime: ' + (Date.now() - start);
+
+            setStatus("Scrape complete");
         }).catch(function(err){
             console.log(err);
         });
     }
 
     const tscrappe = async () => {
-        console.log("scrapping orders ...")
+        setStatus("doing total scrape ...");
         let provider = await detectEthereumProvider();
         await provider.request({ method: 'eth_requestAccounts' });
         provider = new ethers.providers.Web3Provider(provider);
 
-        var filter = {
-            address: '0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9',
-            fromBlock: 10000000
+        let filter = {
+            address: contractAddress,
+            fromBlock: deployementBlock
         };
 
-        var callPromise = provider.getLogs(filter);
+        let callPromise = provider.getLogs(filter);
         callPromise.then(function(events) {
-            for(var i in events){
+            for(let i in events){
                 console.log(events[i]);
             }
         }).catch(function(err){
             console.log(err);
         });
+        setStatus("Total scrape done");
     }
 
-    const mkpair = (idFrom, idTo) => {
-        if(parseInt(idFrom) < parseInt(idTo)){
-            return idFrom + idTo.substring(2);
-        } else {
-            return idTo + idFrom.substring(2);
-        }
-    }
-
-    const hex_to_ascii = (str1) => {
-        var hex  = str1.toString();
-        var str = '';
-        for (var n = 0; n < hex.length; n += 2) {
-            str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
-        }
-        return str;
-    }
-  
     return (
-        <>
-            <button onClick={scrapper}>srappe</button>
-            <button onClick={tscrappe}>total scrape</button>
-        </>
+        <div style={{"marginLeft": "200px", "marginRight": "200px"}}>
+            <h3>Status: {status}</h3>
+            <h3>options</h3>
+            <div>
+                <label>scrape and format</label>
+                <button onClick={scrapper}>srappe</button>
+            </div>
+            <div>
+                <label>scrape without format</label>
+                <button onClick={tscrappe}>total scrape</button>
+            </div>
+            <h3>Scrape Info</h3>
+            <p>Started at block: {deployementBlock}</p>
+            <p id={'latestBlock'}>up to Block:</p>
+            <p id={'scrapeTime'}>scrape time:</p>
+            <p id={'nbLogs'}>nb Logs:</p>
+            <h3>orderBook</h3>
+            <p id={'orderBook'} style={{"overflowWrap": "break-word"}}>-</p>
+            <h3>currencyBook</h3>
+            <p id={'currencyBook'} style={{"overflowWrap": "break-word"}}>-</p>
+            <h3>chartData</h3>
+            <p id={'chartData'} style={{"overflowWrap": "break-word"}}>-</p> 
+        </div>
     )
 }
 

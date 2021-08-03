@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import IPFS from 'ipfs-core';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { ethers } from 'ethers';
 
@@ -16,23 +15,23 @@ import {
     SecondRow
 } from './exchangePageElements'
 
-import TestSection from '../../components/TestSection';
+const ExchangePage = ({ dexBook, ipfs, provider }) => {
 
-const ExchangePage = ({ dexBook }) => {
-    const dexBookDataIPFSHash = 'QmRiiDoRDPDRwcWvhB5diHFg3kB6djbLVsQfTiFQeJkrYK';
-
+    // === CONTRACT ADDRESS & MASTER POINTER ===
+    const DEX_CONTRACT_ADDRESS = "0x21e71C0084b548EEE3b49F5E5a7C0650aCF504eE";
+    const [dexBookDataIPFSHash, setDexBookDataIPFSHash] = useState(undefined);
+    
     //data
     const [dexBookData, setDexBookData] = useState(undefined);
     const [chartData, setChartData] = useState(undefined);
     const [currencyBook, setCurrencyBook] = useState(undefined);
     const [orderBook, setOrderBook] = useState(undefined);
-    const [upToBlock, setUpToBlock] = useState(11042349);
-    const [refreshInterval] = useState(15000);
 
-    //selections
-    const [currencyFrom, setCurrencyFrom] = useState(undefined);
-    const [currencyTo, setCurrencyTo] = useState(undefined);
+    //selections & status
+    const [selectedPair, setSelectedPair] = useState(undefined);
     const [selectedOrder, setSelectedOrder] = useState(undefined);
+    const [scrapeStatus, setScrapeStatus] = useState(undefined);
+    const [status, setStatus] = useState("welcome");
 
     //toggles
     const [refresh, setRefresh] = useState(true);
@@ -40,154 +39,190 @@ const ExchangePage = ({ dexBook }) => {
     const toggle = () => {setIsOpen(!isOpen)};
 
     useEffect(() => {
-        async function loadData() {
+        async function initPage(ipfs, provider, dexBook) {
+            let start = Date.now();
+
             const toBuffer = require('it-to-buffer');
-            const ipfs = await IPFS.create();
+
+            let dexBookDataIPFSHash = await dexBook.getDataIPFSLocation();
+            dexBookDataIPFSHash = ethers.utils.base58.encode("0x1220" + dexBookDataIPFSHash);
+            setDexBookData(dexBookDataIPFSHash);
 
             var bufferedContents = await toBuffer(ipfs.cat(dexBookDataIPFSHash));
-            const dexBookData = JSON.parse((new TextDecoder().decode(bufferedContents)));
-            setDexBookData(dexBookData);
-
-            bufferedContents = await toBuffer(ipfs.cat(dexBookData.currencyBook));
-            const currencyBook = JSON.parse((new TextDecoder().decode(bufferedContents)));
-            setCurrencyBook(currencyBook);
+            var dexBookData = JSON.parse((new TextDecoder().decode(bufferedContents)));
             
+            bufferedContents = await toBuffer(ipfs.cat(dexBookData.currencyBook));
+            var currencyBook = JSON.parse((new TextDecoder().decode(bufferedContents)));
+           
             bufferedContents = await toBuffer(ipfs.cat(dexBookData.orderBook));
-            const orderBook = JSON.parse((new TextDecoder().decode(bufferedContents)));
-            setOrderBook(orderBook);
-
+            var orderBook = JSON.parse((new TextDecoder().decode(bufferedContents)));
+            
             bufferedContents = await toBuffer(ipfs.cat(dexBookData.chartData));
-            const chartData = JSON.parse((new TextDecoder().decode(bufferedContents)));
-            setChartData(chartData);
+            var chartData = JSON.parse((new TextDecoder().decode(bufferedContents)));
 
-            setUpToBlock(dexBookData.lastIPFSUpdateBlock);
-
-            ipfs.stop();
+            let latestBlock = dexBookData.lastIPFSUpdateBlock;
+            
+            let nbLogs = 0;
+            let filter = { address: DEX_CONTRACT_ADDRESS, fromBlock: dexBookData.lastIPFSUpdateBlock };
+            let callPromise = provider.getLogs(filter);
+            callPromise.then( async function(events) {
+                filterLogs(events);
+            }
         }
-        loadData();
-    }, [])
-
+        initPage(ipfs, provider, dexBook);
+    }, [ipfs, provider, dexBook])
+    
     useEffect(() => {
-        const mkpair = (idFrom, idTo) => {
-            if(parseInt(idFrom) < parseInt(idTo)){
-                return idFrom + idTo.substring(2);
-            } else {
-                return idTo + idFrom.substring(2);
-            }
-        }
-
-        const hex_to_ascii = (str1) => {
-            var hex  = str1.toString();
-            var str = '';
-            for (var n = 0; n < hex.length; n += 2) {
-                str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
-            }
-            return str;
-        }
-
         const interval = setInterval( async () => {
-            console.log('fetching logs ... ')
-            let provider = await detectEthereumProvider();
-            await provider.request({ method: 'eth_requestAccounts' });
-            provider = new ethers.providers.Web3Provider(provider);
-
-            var filter = {
-                address: '0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9',
-                fromBlock: upToBlock
-            };
-
-            var callPromise = provider.getLogs(filter);
-            callPromise.then(function(events) {
-
-                var tempOrderBook = orderBook;
-                var tempCurrencyBook = currencyBook;
-                var tempChartData = chartData;
-
-                for(var i in events){
-                    switch(events[i].topics[0]){
-
-                        case "0x8b7c3b99fa246a94698cde11b32f366c6e0a7aad7a5be35b0a990203a77da18a":
-                        // set currency
-                        var currency = {
-                            "address": "0x" + events[i].data.substring(26,66),
-                            "name": hex_to_ascii("0x" + events[i].data.substring(258)).substring(33,36),
-                            "oneMinusFees": parseInt("0x" + events[i].data.substring(130,194)),
-                            "decimals": parseInt("0x" + events[i].data.substring(194, 258))
-                        }
-                        tempCurrencyBook[parseInt(events[i].topics[1].substring(0,34))] = currency;
-                        setUpToBlock(events[i].blockNumber);
-                        break;
-
-                        case "0x5278faed1185575ab8794d2f7094d533baa1889f86b34c254cc019ef59203bb5": 
-                        // new order
-                        if(tempOrderBook[events[i].topics[2]] === undefined){
-                            tempOrderBook[events[i].topics[2]] = {};
-                        }
-
-                        var order = {};
-                        order["owner"] = "0x" + events[i].topics[1].substring(26);
-                        order["currencyIDFrom"] = events[i].topics[2].substring(0,34);
-                        order["currencyIDTo"] = "0x" + events[i].topics[2].substring(34);
-                        order["amount"] = parseInt(events[i].data.substring(0,66));
-                        order["price"] = parseInt("0x" + events[i].data.substring(66));
-
-                        tempOrderBook[events[i].topics[2]][parseInt(events[i].topics[3])] = order;
-                        setUpToBlock(events[i].blockNumber);
-                        break;
-
-                        case "0xcbfa7d191838ece7ba4783ca3a30afd316619b7f368094b57ee7ffde9a923db1":
-                        // cancel order
-                        delete tempOrderBook[events[i].topics[2]][parseInt(events[i].topics[3])];
-                        break;
-
-                        case "0xda67fd5efd7c65cc617b4e30cdd2569c6c2b3d0034729f3c616c6a83b4520a8f":
-                        // fill order
-                        var pair = mkpair(events[i].topics[2].substring(0,34), "0x" + events[i].topics[2].substring(34));
-                        if(tempChartData[pair] === undefined){
-                            tempChartData[pair] = {
-                                blocks: [],
-                                prices: []
-                            }
-                        }
-                        
-                        delete tempOrderBook[events[i].topics[2]][parseInt(events[i].topics[3])];
-                        tempChartData[pair].blocks.push(parseInt(events[i].blockNumber));
-                        tempChartData[pair].prices.push(parseInt("0x" + events[i].data.substring(66)));
-                        setUpToBlock(events[i].blockNumber);
-                        break;
-                        default:
-                            alert('this should not happen');
-                        break;
-                    }
-                }
-                setOrderBook(tempOrderBook);
-                setCurrencyBook(tempCurrencyBook);
-                setChartData(tempChartData);
-                setRefresh(false);
+            let nbLogs = 0;
+            let filter = { address: DEX_CONTRACT_ADDRESS, fromBlock: scrapeStatus.latestBlock };
+            let callPromise = provider.getLogs(filter);
+            callPromise.then( async function(events) {
+                filterLogs(events);
             }).catch(function(err){
                 console.log(err);
             });
         }, refreshInterval);
         return () => { clearInterval(interval) }
-    }, [upToBlock, orderBook, currencyBook, chartData, refreshInterval]);
+    }, [orderBook, currencyBook, chartData, scrapeStatus, provider]);
 
-    const currencyNameToID = (name) => {
-        for(var i in currencyBook){
-            if(currencyBook[i].name === name){
-                return i;
+    const filterLogs = async (events) => {
+        let tempOrderBook = orderBook;
+        let tempCurrencyBook = currencyBook;
+        let tempChartData = chartData;
+        let tempScrapeStatus = scrapeStatus;
+
+        for(let i in events){
+            switch(events[i].topics[0]){
+                
+                // set currency
+                case "0xa83d05db890d90e2c4fcbcda6dcaf7496ec6d876345654077a40b81d87fea5af":
+                    nbLogs = nbLogs + 1;
+                    setStatus("scrapping log nb: " + (nbLogs) + " Set Currency");
+
+                    var contractAddress = "0x" + events[i].topics[2].substring(26);
+                    const { contract } = await getContract(contractAddress);
+
+                    let currency = {
+                        "currencyID": parseInt(events[i].data.substring(0,66)),
+                        "name": await contract.name(),
+                        "symbol": await contract.symbol(),
+                        "oneMinusFees": parseInt("0x" + events[i].data.substring(66, 130)),
+                        "decimals": await contract.decimals(),
+                        "iconIPFSLocation": ethers.utils.base58.encode("0x1220" + events[i].data.substring(130))
+                    }
+                    tempCurrencyBook[contractAddress] = currency;
+
+                    tempScrapeStatus.latestBlock = events[i].blockNumber;
+                break;
+                
+                // new order
+                case "0x29c530b05bef94e2779ef6c0fd084fea9cbfcad9a5a22811fe8a01e95f6acdb9": 
+                    nbLogs = nbLogs + 1;
+                    setStatus("scrapping log nb: " + (nbLogs) + " New Order");
+
+                    let currencyFrom = "0x" + events[i].data.substring(26,66);
+                    let currencyTo = "0x" + events[i].data.substring(90,130);
+                    let pair = currencyFrom + currencyTo;
+                    var orderID = parseInt(events[i].topics[2]);
+                    let amountTo = await dexBook.getOrderAmountTo(orderID)
+                    if(tempOrderBook[pair] === undefined){ tempOrderBook[pair] = {} }
+
+                    let order = {
+                        "owner": "0x" + events[i].topics[1].substring(26),
+                        "currencyFrom": currencyFrom,
+                        "currencyTo": currencyTo,
+                        "amountFrom": parseInt("0x" + events[i].data.substring(130, 194)),
+                        "amountTo": parseInt(amountTo.toString()),
+                        "price": parseInt("0x" + events[i].data.substring(194)) / SIXTEEN_DECIMALS_ONE
+                    };
+
+                    tempOrderBook[pair][orderID] = order;
+
+                    scrapeStatus.latestBlock = events[i].blockNumber;
+                break;
+                
+                // cancel order
+                case "0xafe5d45b77c7cea746dab67e30e6ca60c00cec51787feb121441c48ec20e3e57":
+                    nbLogs = nbLogs + 1;
+                    setStatus("scrapping log nb: " + (nbLogs) + " Cancel Order");
+
+                    orderID = parseInt(events[i].topics[2]);
+                    for(let pair in tempOrderBook){
+                        if(tempOrderBook[pair][orderID] !== undefined) {
+                            delete tempOrderBook[pair][orderID]
+                            scrapeStatus.latestBlock = events[i].blockNumber;
+                            break;
+                        }
+                    }
+                break;
+                
+                // fill order
+                case "0x4e359ed0bfd026757edbe34c77143705ed75e99be4048c6adf9a58f3c0db7211":
+                    nbLogs = nbLogs + 1;
+                    setStatus("scrapping log nb: " + (nbLogs) + " Fill Order");
+
+                    orderID = parseInt(events[i].topics[3]);
+                    for(let pair in tempOrderBook){
+                        if(tempOrderBook[pair][orderID] !== undefined) {
+
+                            const tickData  = await provider.getBlock(events[i].blockNumber);
+                            let tick = {
+                                time: parseInt(tickData.timestamp+"000"), 
+                                value: tempOrderBook[pair][orderID].price
+                            };
+                            
+                            if(tempChartData[pair] === undefined) { tempChartData[pair] = [tick] }
+                            else {
+                                let l = tempChartData[pair].length - 1;
+                                for(let index in tempChartData[pair]){
+                                    let tryIndex = l - index;
+                                    if(tempChartData[pair][tryIndex].time <= tick.time){
+                                        tempChartData[pair].splice(tryIndex+1, 0, tick);
+                                        delete tempOrderBook[pair][orderID];
+                                        scrapeStatus.latestBlock = events[i].blockNumber;
+                                        break;    
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }  
+                break;
+
+                // Set Currency Icon
+                case "0x3c098e62c0feb3c01216f7e9358a236c2d15cf17d113e426c55b42e06b4ce3b1":
+                    nbLogs = nbLogs + 1;
+                    setStatus("scrapping log nb: " + (nbLogs) + " SetCurrency Icon");
+
+                    contractAddress = "0x" + events[i].topics[2].substring(26);
+                    tempCurrencyBook[contractAddress].iconIPFSLocation = ethers.utils.base58.encode("0x1220" + events[i].data.substring(2));
+                break;
+
+                // Set Main Data Location
+                case "0xce825481561f2d9ff0108c267ccc1820f0a1f8d8920935c993ce8fbb59ddbbd3":
+                    nbLogs = nbLogs + 1;
+                    setStatus("scrapping log nb: " + (nbLogs) + " SetMainData");
+                break;
+
+                default:
+                    alert('this should not happen');
+                break;
             }
         }
-        return undefined;
-    }
 
-    const getOrderById = (id) => {
-        for(var i in orderBook){
-            for(var ii in orderBook[i]){
-                if(ii === id){
-                    return [i, ii, orderBook[i][ii]]
-                }
-            }
-        }
+        setDexBookData(dexBookData);
+        setCurrencyBook(currencyBook);
+        setOrderBook(orderBook);
+        setChartData(chartData);
+
+        setScrapeStatus({
+            "lastUpdateTimeStamp": Date.now(),
+            "lastUpdateNbLogSrapped": nbLogs,
+            "lastUpdateRunTime": Date.now() - start,
+            "mostRecentSeenBlock": latestBlock,
+            "refeshInterval": 15000,
+        });)
     }
 
     return (
@@ -208,48 +243,29 @@ const ExchangePage = ({ dexBook }) => {
             />
 
             <FirstRow>
-                <InteractionSection 
-                    selectedOrder={selectedOrder}
+                {/* <InteractionSection 
                     dexBook={dexBook}
-                    safeScrappe={dexBookData === undefined ? upToBlock : dexBookData.lastIPFSUpdateBlock}
-                    currencyFrom={currencyFrom}
-                    currencyTo={currencyTo}
-                    currencyNameToID={currencyNameToID}
-                    currencyBook={currencyBook}
+                    selectedOrder={selectedOrder}
+                    selectedPair={selectedPair}
+                    setSelectedOrderById={setSelectedOrderById}
+                /> */}
+                {/* <OrderBookSection
                     orderBook={orderBook}
-                    getOrderById={getOrderById}
+                    selectedPair={selectedPair}
                     setSelectedOrder={setSelectedOrder}
-                />
-                <OrderBookSection
-                    currencyFrom={currencyFrom}
-                    currencyTo={currencyTo}
-                    currencyNameToID={currencyNameToID}
-                    currencyBook={currencyBook}
-                    orderBook={orderBook}
-                    setSelectedOrder={setSelectedOrder}
-                    getOrderById={getOrderById}
-                    refresh={refresh}
-                    setRefresh={setRefresh}
-                />
-                
-                
+                /> */}
             </FirstRow>
            
             <SecondRow>
-                <ChartSection 
-                    currencyFrom={currencyNameToID(currencyFrom)}
-                    currencyTo={currencyNameToID(currencyTo)}
+                {/* <ChartSection 
+                    selectedPair={selectedPair}
                     chartData={chartData}
+                /> */}
+                {/* <BalOrderSection 
                     currencyBook={currencyBook}
-                    refresh={refresh} 
-                />
-                <BalOrderSection 
-                    currencyBook={currencyBook}
-                    refresh={refresh}
-                    setSelectedOrder={setSelectedOrder}
-                    getOrderById={getOrderById}
                     orderBook={orderBook}
-                />
+                    setSelectedOrder={setSelectedOrder}
+                /> */}
             </SecondRow>
         </>
     );

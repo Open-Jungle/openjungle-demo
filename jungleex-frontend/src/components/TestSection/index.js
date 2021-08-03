@@ -7,7 +7,7 @@ import detectEthereumProvider from '@metamask/detect-provider';
 import { ethers } from 'ethers';
 import IPFS from 'ipfs-core';
 
-const Testsection = () => {
+const Testsection = ({ ipfs }) => {
     const toBuffer = require('it-to-buffer');
 
     const [dexBook, setDexBook] = useState(undefined);
@@ -95,7 +95,7 @@ const Testsection = () => {
         setOrderBook(orderBook);
         ipfs.stop();
     }
-    
+
     return (
             <TestSection>
                 <button onClick={connectToDexBook}>connect Dex</button>
@@ -109,6 +109,7 @@ const Testsection = () => {
                 <p>==IPFS==</p>
                 <button onClick={loadOrderBook}>test IPFS</button>
                 <p>{orderBook === undefined ? '' : orderBook['0x00010002']['1'].price}</p>
+                <img id={'testImg'} src={'https://ipfs.io/ipfs/QmZq31pk2QDfSaF9kBe73UCbx3aEQ7gy9iqpVwRnvmBGPG'} alt={'nop'} type={"img/png"} />
             </TestSection>
     )
 }

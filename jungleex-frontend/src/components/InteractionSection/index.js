@@ -22,19 +22,18 @@ import {
 
 const InteractionSection = ({ 
                     dexBook,
-                    safeScrappe,
                     selectedOrder,
-                    currencyFrom,
-                    currencyTo,
-                    currencyNameToID,
-                    currencyBook,
-                    orderBook,
-                    getOrderById,
-                    setSelectedOrder
+                    selectedPair
+                    //setSelectedOrderById,
                 }) => {
     
+    // DexBookAddress
+    const DEX_ADDRESS = '0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9';
+
+    // for handling big numbers
     const {parseEther} = require("@ethersproject/units");
 
+    // to manage the toogles ..
     const [isNew, setIsNew] = useState(true);
     const [isCancel, setIsCancel] = useState(false);
     const [isFill, setIsFill] = useState(false);
@@ -42,9 +41,11 @@ const InteractionSection = ({
     const toggleCancel = () => {setIsNew(false);setIsCancel(true);setIsFill(false)};
     const toggleFill = () => {setIsNew(false);setIsCancel(false);setIsFill(true)};
 
+    // inputs and displays
     const [amount, setAmount] = useState(0);
     const [price, setPrice] = useState(0);
     const [status, setStatus] = useState('');
+
 
     const newOrder = async e => {
         e.preventDefault();
@@ -53,13 +54,13 @@ const InteractionSection = ({
             return;
         }
         setStatus('Confirm Approval');
-        const { contract } = await getContract(currencyBook[currencyNameToID(currencyFrom)].address);
-        const approve = await contract.approve('0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9', parseEther((amount * (10 ** currencyBook[currencyNameToID(currencyFrom)].decimals)).toString()));
+        const { contract } = await getContract(selectedPair.currencyFrom);
+        const approve = await contract.approve(DEX_ADDRESS, parseEther((amount * (10 ** selectedPair.currencyFromDecimals)).toString()));
         setStatus('Awaiting Approval');
         await approve.wait();
 
         setStatus('Confirm Transaction');
-        const newOrder = await dexBook.newOrder(currencyNameToID(currencyFrom), currencyNameToID(currencyTo), parseEther((amount * (10 ** currencyBook[currencyNameToID(currencyFrom)]).decimals).toString()), price);
+        const newOrder = await dexBook.newOrder(selectedPair.currencyFrom, selectedPair.currencyTo, parseEther(amount * (10 ** selectedPair.currencyFromDecimals).toString()), price);
         setStatus('Awaiting Transaction');
         await newOrder.wait();
         setStatus('Order Is Live');
@@ -72,13 +73,13 @@ const InteractionSection = ({
             return
         }
         setStatus('Confirm Approval');
-        const { contract } = await getContract(currencyBook[parseInt(selectedOrder[2].currencyIDTo)].address);
-        const approve = await contract.approve('0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9', parseEther((selectedOrder[2].amount * selectedOrder[2].price).toString()));
+        const { contract } = await getContract(selectedOrder.currencyTo);
+        const approve = await contract.approve(DEX_ADDRESS, parseEther(selectedOrder.amountTo.toString()));
         setStatus('Awaiting Approval');
         await approve.wait();
 
         setStatus('Confirm Transaction');
-        const fillOrder = await dexBook.fillOrder(selectedOrder[1]);
+        const fillOrder = await dexBook.fillOrder(selectedOrder.orderID);
         setStatus('Awaiting Transaction');
         await fillOrder.wait();
         setStatus('Order filled');
@@ -87,7 +88,7 @@ const InteractionSection = ({
     const cancelOrder = async e => {
         e.preventDefault();
         setStatus('Confirm Transaction');
-        const cancelOrder = await dexBook.cancelOrder(selectedOrder[1]);
+        const cancelOrder = await dexBook.cancelOrder(selectedOrder.orderID);
         setStatus('Awaiting Transaction');
         await cancelOrder.wait()
         setStatus('Order canceled');
@@ -104,7 +105,8 @@ const InteractionSection = ({
     }
 
     const handleSearchOrderById = (e) => {
-        setSelectedOrder(getOrderById((document.getElementById('fillID').value)));
+        e.preventDefault();
+        setSelectedOrderById(document.getElementById('fillID').value);
     }
 
     return (
@@ -121,6 +123,7 @@ const InteractionSection = ({
                 </PannelMenuOption>
             </PannelMenu>
             <PannelContent>
+
                 <NewOrderSection isOpen={isNew}>
                     <PannelRow height={'40%'} display={'flex'} align={'center'}>
                         <CurrencyWrapper>
