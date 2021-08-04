@@ -45,7 +45,7 @@ const NavBar = ({ toggle }) => {
                     <MobileIcon onClick={toggle}>
                         <FaBars />
                     </MobileIcon>
-                    {/* <NavMenu>
+                    <NavMenu>
                         <NavItem>
                             <NavLinks 
                                 to='about'
@@ -82,9 +82,9 @@ const NavBar = ({ toggle }) => {
                             </NavLinks>
                         </NavItem>
                     </NavMenu> */}
-                    {/* <NavTempLogo onClick={toggleHome}>
+                    <NavTempLogo onClick={toggleHome}>
                             <AiOutlineSetting />
-                    </NavTempLogo> */}
+                    </NavTempLogo>
                 </NavBarContainer>
             </Nav>
         </>

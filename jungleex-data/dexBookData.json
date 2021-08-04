@@ -1,9 +1,9 @@
 {
-    "lastIPFSUpdateBlock": 11079573,
-    "launchBlock": 11021268,
-    "totalNbLogs": 0,
-    "dexAddress": "0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9",
-    "currencyBook": "QmXyDcf5ShG7vM2yGm2x2QTKaKch9Geq9A8RWmLgUvMfv3",
-    "orderBook": "Qmad3U19m6ksmY4x3os8jZ2sB9f7FyhuCYKDZHC8vQzWq5",
-    "chartData": "QmanFppNcieDE4fMYoraSALuro8VwTXZ292n7aJXLhmKBU"
+    "lastIPFSUpdateBlock": 11173792,
+    "deployementBlock": 11173717,
+    "totalNbLogs": 6,
+    "dexAddress": "0x248E3a4f999ea7743106b8b6A79052f4bc09eA99",
+    "currencyBook": "QmaVs2dBBd21KMFR22AcrRvweyGxYmUQ22tEW2CZYJFpMn",
+    "orderBook": "QmPuGiPT5MK8pmxTfJJ538ZsW1dkV7y1N1s9iYvsp7se21",
+    "chartData": "QmcBekCCbhqjb4zUizQRC5mofz2AeXP2hekDBSJv5HbxFj"
 }

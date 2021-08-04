@@ -6,64 +6,63 @@ import {
 } from './orderBookElements'
 
 const OrderBookSection = ({ 
-                    currencyFrom,
-                    currencyTo,
                     orderBook,
-                    setSelectedOrder,
-                    setRefresh,
-                    refresh,
-                    getOrderById,
-                    currencyNameToID,
-                    currencyBook
+                    selection,
+                    setSelectionByOrderId
                 }) => {
-    const [filteredBook, setFilteredBook] = useState(undefined);
+    const [filteredBuyBook, setFilteredBuyBook] = useState(undefined);
+    const [filteredSellBook, setFilteredSellBook] = useState(undefined);
     
     useEffect(() => {
-        const currencyNameToID = (name) => {
-            for(var i in currencyBook){
-                if(currencyBook[i].name === name){
-                    return i;
-                }
-            }
-        }
-
-        function filterBook(currencyFrom, currencyTo, orderBook){
-            const padHexPair = (hexFrom, hexTo) => {
-                return '0x'+'00000000000000000000000000000000'.substring(0, 32 - hexFrom.length) + hexFrom + '00000000000000000000000000000000'.substring(0, 32 - hexTo.length) + hexTo;
-            }
-            if(currencyFrom === undefined || currencyTo === undefined){
-                setFilteredBook(undefined);
-            } else {
-                var filteredBook = [];
-                const hexPair = padHexPair(currencyFrom.toString(16), currencyTo.toString(16));
-                for(var i in orderBook){
-                    if(i === hexPair){
-                        for(var ii in orderBook[i]){
-                            orderBook[i][ii]["id"] = ii;
-                            filteredBook.push(orderBook[i][ii]);
-                        }
+        console.log('orderBook Loop');
+        function filterBook(){
+            var filteredBuyBook = [];
+            var filteredSellBook = [];
+            for(let pair in orderBook){
+                if(pair === selection.pair.pair){
+                    for(let orderID in orderBook[pair]){        
+                        let order = orderBook[pair][orderID];
+                        order["id"] = orderID;
+                        filteredBuyBook.push(order);
                     }
+                    for(let orderID in orderBook[selection.pair.invertedPair]){
+                        
+                        let order = orderBook[selection.pair.invertedPair][orderID];
+                        order["id"] = orderID;
+                        filteredSellBook.push(order);
+                    }
+                    break;
                 }
-                setFilteredBook(filteredBook);
             }
+            setFilteredBuyBook(filteredBuyBook);
+            setFilteredSellBook(filteredSellBook);
         };
-        filterBook(currencyNameToID(currencyFrom), currencyNameToID(currencyTo), orderBook);
-        setRefresh(true);
-    }, [currencyFrom, currencyTo, orderBook, setRefresh, refresh, currencyBook])
+        filterBook();
+    },[orderBook, selection])
 
     const onOptionClicked = value => () => {
-        setSelectedOrder(getOrderById(value));
+        setSelectionByOrderId(value);
     };
     
     return (
         <OrderBookWrapper>
-            {filteredBook === undefined ? 
+            {filteredBuyBook === undefined ? 
                 'Select a pair first' : 
-                filteredBook.length === 0 ? 
-                    'No orders for this pair' : 
-                    filteredBook.map((item) => (
+                filteredBuyBook.length === 0 ? 
+                    'No buy orders for this pair' : 
+                    filteredBuyBook.map((item) => (
                         <OrderWrapper onClick={onOptionClicked(item.id)} key={Math.random()}>
-                            ID: {item.id} Amount: {item.amount} Price: {item.price}
+                            ID: {item.id} Amount: {item.amountFrom} Price: {item.price}
+                        </OrderWrapper>
+                    ))
+            }
+            {filteredSellBook === undefined ? 
+                'Select a pair first' : 
+                filteredSellBook.length === 0 ? 
+                    'No sell orders for this pair' : 
+                    filteredSellBook.map((item) => (
+                        <OrderWrapper onClick={onOptionClicked(item.id)} key={Math.random()}>
+                            ID: {item.id} Amount: {item.amountTo} Price: {1 / item.price}
                         </OrderWrapper>
                     ))
             }

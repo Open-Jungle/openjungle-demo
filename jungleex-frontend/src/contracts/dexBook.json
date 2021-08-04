@@ -12,12 +12,6 @@
                 },
                 {
                     "indexed": true,
-                    "internalType": "bytes32",
-                    "name": "pair",
-                    "type": "bytes32"
-                },
-                {
-                    "indexed": true,
                     "internalType": "uint256",
                     "name": "orderID",
                     "type": "uint256"
@@ -36,15 +30,21 @@
                     "type": "address"
                 },
                 {
-                    "indexed": true,
-                    "internalType": "bytes32",
-                    "name": "pair",
-                    "type": "bytes32"
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "currencyFrom",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "currencyTo",
+                    "type": "address"
                 },
                 {
                     "indexed": false,
                     "internalType": "uint256",
-                    "name": "amount",
+                    "name": "amountFrom",
                     "type": "uint256"
                 },
                 {
@@ -69,25 +69,19 @@
                 {
                     "indexed": true,
                     "internalType": "address",
-                    "name": "buyer",
+                    "name": "owner",
                     "type": "address"
                 },
                 {
                     "indexed": true,
-                    "internalType": "bytes32",
-                    "name": "pair",
-                    "type": "bytes32"
+                    "internalType": "address",
+                    "name": "buyer",
+                    "type": "address"
                 },
                 {
                     "indexed": false,
                     "internalType": "uint256",
-                    "name": "amount",
-                    "type": "uint256"
-                },
-                {
-                    "indexed": false,
-                    "internalType": "uint256",
-                    "name": "price",
+                    "name": "amountTo",
                     "type": "uint256"
                 },
                 {
@@ -105,39 +99,122 @@
             "inputs": [
                 {
                     "indexed": true,
-                    "internalType": "bytes16",
-                    "name": "currencyID",
-                    "type": "bytes16"
+                    "internalType": "address",
+                    "name": "previousOwner",
+                    "type": "address"
                 },
                 {
-                    "indexed": false,
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "newOwner",
+                    "type": "address"
+                }
+            ],
+            "name": "OwnershipTransferred",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "msgSender",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                }
+            ],
+            "name": "RemoveCurrency",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "msgSender",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
                     "internalType": "address",
                     "name": "contractAddress",
                     "type": "address"
                 },
                 {
                     "indexed": false,
-                    "internalType": "string",
-                    "name": "currencyName",
-                    "type": "string"
+                    "internalType": "bytes32",
+                    "name": "iconIPFSLocation",
+                    "type": "bytes32"
+                }
+            ],
+            "name": "SetCurrencyIcon",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "msgSender",
+                    "type": "address"
                 },
                 {
                     "indexed": false,
-                    "internalType": "uint32",
+                    "internalType": "bytes32",
+                    "name": "newDataIPFSLocation",
+                    "type": "bytes32"
+                }
+            ],
+            "name": "SetDataIPFSLocation",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "msgSender",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "currencyID",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
                     "name": "oneMinusFees",
-                    "type": "uint32"
+                    "type": "uint256"
                 },
                 {
                     "indexed": false,
-                    "internalType": "uint8",
-                    "name": "decimals",
-                    "type": "uint8"
+                    "internalType": "bytes32",
+                    "name": "iconIPFSLocation",
+                    "type": "bytes32"
                 }
             ],
             "name": "SetNewCurrency",
             "type": "event"
         },
         {
+            "constant": false,
             "inputs": [
                 {
                     "internalType": "uint256",
@@ -146,11 +223,19 @@
                 }
             ],
             "name": "cancelOrder",
-            "outputs": [],
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
             "stateMutability": "nonpayable",
             "type": "function"
         },
         {
+            "constant": false,
             "inputs": [
                 {
                     "internalType": "uint256",
@@ -159,21 +244,29 @@
                 }
             ],
             "name": "fillOrder",
-            "outputs": [],
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
             "stateMutability": "nonpayable",
             "type": "function"
         },
         {
+            "constant": false,
             "inputs": [
                 {
-                    "internalType": "uint128",
-                    "name": "currencyIDFrom",
-                    "type": "uint128"
+                    "internalType": "address",
+                    "name": "currencyFrom",
+                    "type": "address"
                 },
                 {
-                    "internalType": "uint128",
-                    "name": "currencyIDTo",
-                    "type": "uint128"
+                    "internalType": "address",
+                    "name": "currencyTo",
+                    "type": "address"
                 },
                 {
                     "internalType": "uint256",
@@ -187,50 +280,169 @@
                 }
             ],
             "name": "newOrder",
-            "outputs": [],
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
             "stateMutability": "nonpayable",
             "type": "function"
         },
         {
+            "constant": false,
             "inputs": [
                 {
-                    "internalType": "string",
-                    "name": "name",
-                    "type": "string"
-                },
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                }
+            ],
+            "name": "removeCurrency",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [],
+            "name": "renounceOwnership",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
                 {
                     "internalType": "address",
                     "name": "contractAddress",
                     "type": "address"
                 },
                 {
-                    "internalType": "uint32",
+                    "internalType": "uint256",
                     "name": "oneMinusFees",
-                    "type": "uint32"
+                    "type": "uint256"
                 },
                 {
-                    "internalType": "uint8",
-                    "name": "decimals",
-                    "type": "uint8"
+                    "internalType": "bytes32",
+                    "name": "iconIPFSLocation",
+                    "type": "bytes32"
                 }
             ],
             "name": "setCurrency",
             "outputs": [
                 {
-                    "internalType": "uint128",
+                    "internalType": "bool",
                     "name": "",
-                    "type": "uint128"
+                    "type": "bool"
                 }
             ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                },
+                {
+                    "internalType": "bytes32",
+                    "name": "IPFSHash",
+                    "type": "bytes32"
+                }
+            ],
+            "name": "setCurrencyIcon",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "newIPFSlocation",
+                    "type": "bytes32"
+                }
+            ],
+            "name": "setDataIPFSLocation",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "newOwner",
+                    "type": "address"
+                }
+            ],
+            "name": "transferOwnership",
+            "outputs": [],
+            "payable": false,
             "stateMutability": "nonpayable",
             "type": "function"
         },
         {
             "inputs": [],
+            "payable": false,
             "stateMutability": "nonpayable",
             "type": "constructor"
         },
         {
+            "constant": true,
+            "inputs": [
+                {
+                    "internalType": "uint128",
+                    "name": "currencyID",
+                    "type": "uint128"
+                }
+            ],
+            "name": "getCurrencyAddress",
+            "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
             "inputs": [],
             "name": "getCurrencyBookSize",
             "outputs": [
@@ -240,10 +452,12 @@
                     "type": "uint256"
                 }
             ],
+            "payable": false,
             "stateMutability": "view",
             "type": "function"
         },
         {
+            "constant": true,
             "inputs": [
                 {
                     "internalType": "address",
@@ -251,37 +465,92 @@
                     "type": "address"
                 }
             ],
-            "name": "getCurrencyByAddress",
+            "name": "getCurrencyIconLocation",
             "outputs": [
                 {
-                    "internalType": "bytes16",
+                    "internalType": "bytes32",
                     "name": "",
-                    "type": "bytes16"
+                    "type": "bytes32"
                 }
             ],
+            "payable": false,
             "stateMutability": "view",
             "type": "function"
         },
         {
+            "constant": true,
             "inputs": [
                 {
-                    "internalType": "uint128",
-                    "name": "currencyID",
-                    "type": "uint128"
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
                 }
             ],
-            "name": "getCurrencyByID",
+            "name": "getCurrencyID",
             "outputs": [
                 {
-                    "internalType": "bytes",
+                    "internalType": "uint256",
                     "name": "",
-                    "type": "bytes"
+                    "type": "uint256"
                 }
             ],
+            "payable": false,
             "stateMutability": "view",
             "type": "function"
         },
         {
+            "constant": true,
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                }
+            ],
+            "name": "getCurrencyOneMinusFees",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "getDataIPFSLocation",
+            "outputs": [
+                {
+                    "internalType": "bytes32",
+                    "name": "",
+                    "type": "bytes32"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "getIPFSPrefix",
+            "outputs": [
+                {
+                    "internalType": "bytes2",
+                    "name": "",
+                    "type": "bytes2"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
             "inputs": [
                 {
                     "internalType": "uint256",
@@ -289,18 +558,41 @@
                     "type": "uint256"
                 }
             ],
-            "name": "getOrder",
+            "name": "getOrderAmountFrom",
             "outputs": [
                 {
-                    "internalType": "bytes",
+                    "internalType": "uint256",
                     "name": "",
-                    "type": "bytes"
+                    "type": "uint256"
                 }
             ],
+            "payable": false,
             "stateMutability": "view",
             "type": "function"
         },
         {
+            "constant": true,
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "orderID",
+                    "type": "uint256"
+                }
+            ],
+            "name": "getOrderAmountTo",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
             "inputs": [],
             "name": "getOrderBookSize",
             "outputs": [
@@ -310,32 +602,113 @@
                     "type": "uint256"
                 }
             ],
+            "payable": false,
             "stateMutability": "view",
             "type": "function"
         },
         {
+            "constant": true,
             "inputs": [
                 {
-                    "internalType": "bytes16",
-                    "name": "currencyID",
-                    "type": "bytes16"
+                    "internalType": "uint256",
+                    "name": "orderID",
+                    "type": "uint256"
                 }
             ],
-            "name": "isApprovedCurrencyID",
+            "name": "getOrderCurrencyFrom",
             "outputs": [
                 {
-                    "internalType": "bool",
+                    "internalType": "address",
                     "name": "",
-                    "type": "bool"
+                    "type": "address"
                 }
             ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "orderID",
+                    "type": "uint256"
+                }
+            ],
+            "name": "getOrderCurrencyTo",
+            "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "orderID",
+                    "type": "uint256"
+                }
+            ],
+            "name": "getOrderOwner",
+            "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "orderID",
+                    "type": "uint256"
+                }
+            ],
+            "name": "getOrderPrice",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "getOwner",
+            "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "payable": false,
             "stateMutability": "view",
             "type": "function"
         }
     ],
      "networks": {
         "97": {
-          "address": "0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9"
+          "address": "0x248E3a4f999ea7743106b8b6A79052f4bc09eA99"
         }}
 }
     

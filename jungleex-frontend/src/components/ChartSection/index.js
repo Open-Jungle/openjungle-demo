@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
-import { createChart, CrosshairMode } from 'lightweight-charts';
-import detectEthereumProvider from '@metamask/detect-provider';
-import { ethers } from 'ethers';
+import { createChart } from 'lightweight-charts';
 
 import {
     ChartSectionWrapper,
@@ -10,89 +8,61 @@ import {
 
 const ChartSection = ({ 
                     chartData,
-                    currencyBook,
-                    refresh,
-                    currencyTo,
-                    currencyFrom,
+                    selection
                 }) => {
 
     useEffect(() => {
-        const padHexPair = (hexFrom, hexTo) => {
-            return '0x'+'00000000000000000000000000000000'.substring(0, 32 - hexFrom.length) + hexFrom + '00000000000000000000000000000000'.substring(0, 32 - hexTo.length) + hexTo;
-        };
-
-        const stampToDate = (stamp) => {
-            var date_not_formatted = new Date(stamp);
-            var formatted_string = date_not_formatted.getFullYear() + "-";
-            if (date_not_formatted.getMonth() < 9) { formatted_string += "0"; }
-            formatted_string += (date_not_formatted.getMonth() + 1);
-            formatted_string += "-";
-            if(date_not_formatted.getDate() < 10) { formatted_string += "0"; }
-            formatted_string += date_not_formatted.getDate();
-            return formatted_string;
-        }
+        console.log("chart section loop");
         
-        async function setChartData(chartData, currencyTo, currencyFrom) {
-            var formatedData = [];
-            if(currencyFrom !== undefined & currencyTo !== undefined){
-                
-                const pair = padHexPair(currencyFrom, currencyTo)
-                
-                let provider = await detectEthereumProvider();
-                await provider.request({ method: 'eth_requestAccounts' });
-                provider = new ethers.providers.Web3Provider(provider);
-                
-                for(var i in chartData){
-                    if(i === pair){
-                        for(var ii in chartData[i].blocks){
-                            const tickData  = await provider.getBlock(chartData[i].blocks[ii])
-                            formatedData.push({
-                                time: stampToDate(parseInt(tickData.timestamp+"000")), 
-                                value: chartData[i].prices[ii]
-                            })
+        async function setChartData(chartData, selection) {
+            let formatedData = [];
+            if(selection.pair.pair.length === 84){
+                for(let tick in chartData[selection.pair.pair]){
+                    formatedData.push(chartData[selection.pair.pair][tick]);
+                }
+                for(let tick in chartData[selection.pair.invertedPair]){
+                    let l = formatedData.length - 1;
+                    for(let index in formatedData){
+                        let tryIndex = l - index;
+                        if(formatedData[tryIndex].time <= tick.time){
+                            formatedData.splice(tryIndex + 1, 0, {
+                                time: tick.time,
+                                price: 1 / tick.price
+                            });
+                            break;    
                         }
                     }
                 }
             }
+        
             document.getElementById("chart1").innerHTML = '';
             var chart = createChart(document.getElementById("chart1"), {
                 width: 450,
                 height: 200,
-                crosshair: {
-                    mode: CrosshairMode.Normal
-                },
-                priceScale: {
-                    scaleMargins: {
-                    top: 0.3,
-                    bottom: 0.25
-                    },
-                    borderVisible: false
-                },
                 layout: {
-                    backgroundColor: "#131722",
-                    textColor: "#d1d4dc"
+                    backgroundColor: '#ffffff',
+                    textColor: 'rgba(33, 56, 77, 1)',
                 },
                 grid: {
                     vertLines: {
-                    color: "rgba(42, 46, 57, 0)"
+                        color: 'rgba(197, 203, 206, 0.7)',
                     },
                     horzLines: {
-                    color: "rgba(42, 46, 57, 0.6)"
-                    }
-                }
+                        color: 'rgba(197, 203, 206, 0.7)',
+                    },
+                },
+                timeScale: {
+                    timeVisible: true,
+                secondsVisible: false,
+                },
             });
 
-            var areaSeries = chart.addAreaSeries({
-                topColor: "rgba(38,198,218, 0.56)",
-                bottomColor: "rgba(38,198,218, 0.04)",
-                lineColor: "rgba(38,198,218, 1)",
-                lineWidth: 2
-            });
+            var lineSeries = chart.addLineSeries();
 
-            areaSeries.setData(formatedData);
+            lineSeries.setData(formatedData);
         }
-        setChartData(chartData, currencyTo, currencyFrom);
-    }, [chartData, currencyTo, currencyFrom, refresh])
+        setChartData(chartData, selection);
+    }, [chartData, selection])
 
     return (
         <ChartSectionWrapper>

@@ -160,17 +160,20 @@ contract dexBook is Context, Ownable {
         // Calculate the true amount that made it to the contracts address
         uint256 amountFrom = orderAmount.mul(_currencyBook[currencyFrom].oneMinusFees).div(SIXTEEN_DECIMALS_ONE);
         
-        // Calculate the ajusted decimal diff
-        uint256 decimalAdjustedAmountFrom;
+        // Calculate the amountTo
+        uint256 amountTo;
+        //if(amoutToDecimals > amountFromDecimals){
         if(_currencyBook[currencyTo].decimals > _currencyBook[currencyFrom].decimals){
-            decimalAdjustedAmountFrom = amountFrom.mul(10 ** uint256(_currencyBook[currencyTo].decimals - _currencyBook[currencyFrom].decimals));
-        }else{
-            decimalAdjustedAmountFrom = amountFrom.div(10 ** uint256(_currencyBook[currencyFrom].decimals - _currencyBook[currencyTo].decimals));
+            //amountTo = ((amountFrom * (10 ** (amoutToDecimals > amountFromDecimals))) * orderPrice) / (10 ** 16)
+            amountTo = ((amountFrom * (10 ** uint256(_currencyBook[currencyTo].decimals - _currencyBook[currencyFrom].decimals))) * orderPrice) / SIXTEEN_DECIMALS_ONE;
+            //if(amountTo == 0) {alert(Transaction would return nothing)}
+            if(amountTo == uint256(0)) { revert("Transaction will return no amount"); }
+        } else {//if(amoutToDecimals <= amountFromDecimals){
+            amountTo = ((amountFrom * orderPrice) / SIXTEEN_DECIMALS_ONE) / (10 ** uint256(_currencyBook[currencyFrom].decimals - _currencyBook[currencyTo].decimals));
+            if(amountTo == uint256(0)) { revert("Transaction will return no amount"); }
         }
         
-        // Calculate the expected amountTo
-        uint256 amountTo = decimalAdjustedAmountFrom.mul(orderPrice).div(SIXTEEN_DECIMALS_ONE);
-        
+
         // create the nre order
         _orderBook[_nextOrderID] = order({
             owner: msg.sender,

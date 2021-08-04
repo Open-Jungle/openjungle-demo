@@ -36,25 +36,31 @@ currencyBook.json: {
 }
 
 
+selection:{
+    order:{
+        orderID: int
+        owner: address,
+        amountFrom: int,
+        amountTo: int,
+        price: float
+    }
 
-selectedOrder:{
-    orderID: int
-    owner: address,
-    amountFrom: int,
-    amountTo: int,
-    price: float
+    pair:{
+        currencyFrom: address,
+        currencyTo: address,
+        currencyFromName: string,
+        currencyToName: string,
+        currencyFromSymbol: string,
+        currencyToSymbol: string,
+        pair: "currencyFrom"+"currencyTo",
+        invertedPair: "currencyTo"+"currencyFrom",
+        currencyFromIPFSIcon: string (base58),
+        currencyToIPFSIcon: string (base58),
+        currencyFromDecimals: int,
+        currencyToDecimals: int
+    }
 }
 
-selectedPair:{
-    currencyFrom: address,
-    currencyTo: address,
-    pair: "currencyFrom"+"currencyTo",
-    invertedPair: "currencyTo"+"currencyFrom",
-    currencyFromIPFSIcon: string (base58),
-    currencyToIPFSIcon: string (base58),
-    currencyFromDecimals: int,
-    currencyToDecimals: int
-}
 
 scrapeStatus:{
     lastUpdateTimeStamp: int,

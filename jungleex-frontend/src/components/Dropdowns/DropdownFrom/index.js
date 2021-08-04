@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 import {
     DropDownContainer,
@@ -8,32 +8,27 @@ import {
     ListItem
 } from '../dropdownElements'
 
-export default function DropdownFrom({ options, setCurrencyFrom }) {
+export default function DropdownFrom({ options, setPair, selection }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(null);
 
   const toggling = () => setIsOpen(!isOpen);
 
   const onOptionClicked = value => () => {
-    setSelectedOption(value);
+    setPair(value, selection.pair.currencyTo);
     setIsOpen(false);
   };
-
-  useEffect(() => {
-      setCurrencyFrom(selectedOption);
-  }, [selectedOption, setCurrencyFrom])
 
   return (
       <DropDownContainer>
         <DropDownHeader onClick={toggling}>
-          {selectedOption || "Select"}
+          {selection.pair.currencyFromSymbol || "select"}
         </DropDownHeader>
         {isOpen && (
           <DropDownListContainer>
             <DropDownList>
               {options.map(option => (
-                <ListItem onClick={onOptionClicked(option)} key={Math.random()}>
-                  {option}
+                <ListItem onClick={onOptionClicked(option.address)} key={Math.random()}>
+                  {option.name}
                 </ListItem>
               ))}
             </DropDownList>

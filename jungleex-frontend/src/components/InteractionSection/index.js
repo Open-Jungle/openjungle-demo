@@ -21,17 +21,14 @@ import {
 } from './interactionSectionElements'
 
 const InteractionSection = ({ 
+                    DEX_ADDRESS,
                     dexBook,
-                    selectedOrder,
-                    selectedPair
-                    //setSelectedOrderById,
+                    selection,
+                    setSelectedOrderById
                 }) => {
-    
-    // DexBookAddress
-    const DEX_ADDRESS = '0x0a0CE136e6a653e7c30E8e681DcBfC5059EC0ea9';
 
     // for handling big numbers
-    const {parseEther} = require("@ethersproject/units");
+    const {parseUnits} = require("@ethersproject/units");
 
     // to manage the toogles ..
     const [isNew, setIsNew] = useState(true);
@@ -46,21 +43,26 @@ const InteractionSection = ({
     const [price, setPrice] = useState(0);
     const [status, setStatus] = useState('');
 
-
     const newOrder = async e => {
         e.preventDefault();
         if(amount === 0 || price === 0){
             alert('cant send order with zero value');
             return;
         }
+        
         setStatus('Confirm Approval');
-        const { contract } = await getContract(selectedPair.currencyFrom);
-        const approve = await contract.approve(DEX_ADDRESS, parseEther((amount * (10 ** selectedPair.currencyFromDecimals)).toString()));
+        const { contract } = await getContract(selection.pair.currencyFrom);
+        const approve = await contract.approve(DEX_ADDRESS, parseUnits(amount.toString(),selection.pair.currencyFromDecimals));
         setStatus('Awaiting Approval');
         await approve.wait();
 
         setStatus('Confirm Transaction');
-        const newOrder = await dexBook.newOrder(selectedPair.currencyFrom, selectedPair.currencyTo, parseEther(amount * (10 ** selectedPair.currencyFromDecimals).toString()), price);
+        const newOrder = await dexBook.newOrder(
+            selection.pair.currencyFrom, 
+            selection.pair.currencyTo, 
+            parseUnits(amount.toString(),selection.pair.currencyFromDecimals), 
+            parseUnits(price.toString(),16)
+        );
         setStatus('Awaiting Transaction');
         await newOrder.wait();
         setStatus('Order Is Live');
@@ -68,18 +70,19 @@ const InteractionSection = ({
 
     const fillOrder = async e => {
         e.preventDefault();
-        if(selectedOrder === undefined){
+        if(selection.order.orderID === 0){
             alert('must first select an order');
-            return
+            return;
         }
         setStatus('Confirm Approval');
-        const { contract } = await getContract(selectedOrder.currencyTo);
-        const approve = await contract.approve(DEX_ADDRESS, parseEther(selectedOrder.amountTo.toString()));
+        const { contract } = await getContract(selection.pair.currencyTo);
+        const trueAmountTo = await dexBook.getOrderAmountTo(selection.order.orderID);
+        const approve = await contract.approve(DEX_ADDRESS, parseUnits(trueAmountTo.toString(), selection.pair.currencyToDecimals));
         setStatus('Awaiting Approval');
         await approve.wait();
 
         setStatus('Confirm Transaction');
-        const fillOrder = await dexBook.fillOrder(selectedOrder.orderID);
+        const fillOrder = await dexBook.fillOrder(selection.order.orderID);
         setStatus('Awaiting Transaction');
         await fillOrder.wait();
         setStatus('Order filled');
@@ -87,8 +90,12 @@ const InteractionSection = ({
 
     const cancelOrder = async e => {
         e.preventDefault();
+        if(selection.order.orderID === 0){
+            alert('must first select an order');
+            return;
+        }
         setStatus('Confirm Transaction');
-        const cancelOrder = await dexBook.cancelOrder(selectedOrder.orderID);
+        const cancelOrder = await dexBook.cancelOrder(selection.order.orderID);
         setStatus('Awaiting Transaction');
         await cancelOrder.wait()
         setStatus('Order canceled');
@@ -107,7 +114,7 @@ const InteractionSection = ({
     const handleSearchOrderById = (e) => {
         e.preventDefault();
         setSelectedOrderById(document.getElementById('fillID').value);
-    }
+    }    
 
     return (
         <InteractionSectionWrapper>
@@ -127,13 +134,13 @@ const InteractionSection = ({
                 <NewOrderSection isOpen={isNew}>
                     <PannelRow height={'40%'} display={'flex'} align={'center'}>
                         <CurrencyWrapper>
-                            {currencyFrom}
+                            {selection.pair.currencyFromSymbol}
                         </CurrencyWrapper>
                         <ArrowWrapper>
                             <FaArrowRight />
                         </ArrowWrapper>
                         <CurrencyWrapper>
-                            {currencyTo}
+                            {selection.pair.currencyToSymbol}
                         </CurrencyWrapper>
                     </PannelRow>
                     <PannelRow height={'40%'} display={'block'} align={''}>
@@ -147,7 +154,7 @@ const InteractionSection = ({
                         </InputWrapper>
                     </PannelRow>
                     <PannelRow height={'20%'} display={'block'} align={'center'}>
-                        <p>{amount} {currencyFrom} <FaArrowRight /> {amount * price} {currencyTo}.</p>
+                        <p>{amount} {selection.pair.currencyFromSymbol} <FaArrowRight /> {amount * price} {selection.pair.currencyToSymbol}.</p>
                         <button onClick={newOrder}>Confirm New Order</button>
                         <p>{status}</p>
                     </PannelRow>
@@ -164,62 +171,33 @@ const InteractionSection = ({
                             <FaSearch />
                         </button><br/>
                         <FillInfoText>
-                            {selectedOrder === undefined ? '' : 
-                                selectedOrder[1] === undefined ? '' : 
-                                    'currently selected order: ' + selectedOrder[1]
-                            }
+                            {selection.order.orderID}
                         </FillInfoText>
                     </PannelRow>
                     <PannelRow height={'20%'} display={'flex'} align={'center'}>
                         <CurrencyWrapper>
-                            {selectedOrder === undefined ? '' : 
-                                selectedOrder[2] === undefined ? '' :
-                                    currencyBook[parseInt(selectedOrder[2].currencyIDTo)].name
-                            }
+                            {selection.pair.currencyToName}
                         </CurrencyWrapper>
                         <ArrowWrapper>
                             <FaArrowRight />
                         </ArrowWrapper>
                         <CurrencyWrapper>
-                            {selectedOrder === undefined ? '' : 
-                                selectedOrder[2] === undefined ? '' :
-                                    currencyBook[parseInt(selectedOrder[2].currencyIDFrom)].name
-                            }
+                            {selection.pair.currencyFromName}
                         </CurrencyWrapper>
                     </PannelRow>
                     <PannelRow height={'20%'} display={'block'} align={''}>
                         <p>
-                            Amount: {selectedOrder === undefined || currencyBook === undefined ? '' : 
-                                        selectedOrder[2] === undefined ? '' : 
-                                            selectedOrder[2].amount / 10 ** currencyBook[parseInt(selectedOrder[2].currencyIDTo)].decimals
-                                    }
+                            Amount: {selection.order.amountTo}
                         </p>
                         <p>
-                            Price: {selectedOrder === undefined ? '' : 
-                                        selectedOrder[2] === undefined ? '' : 
-                                            selectedOrder[2].price
-                                    }
+                            Price: {selection.order.price}
                         </p>
                     </PannelRow>
                     <PannelRow height={'20%'} display={'block'} align={'center'}>
                         <p>
-                            {selectedOrder === undefined || currencyBook === undefined ? '' : 
-                                selectedOrder[2] === undefined ? '' : 
-                                    selectedOrder[2].amount / 10 ** currencyBook[parseInt(selectedOrder[2].currencyIDTo)].decimals
-                            } {selectedOrder === undefined ? '' : 
-                                selectedOrder[2] === undefined ? '' :
-                                    currencyBook[parseInt(selectedOrder[2].currencyIDTo)].name
-                            }
+                            {selection.order.amountTo} {selection.pair.currencyToName}
                             <FaArrowRight />
-                            {selectedOrder === undefined || currencyBook === undefined ? '' : 
-                                selectedOrder[2] === undefined ? '' : 
-                                    selectedOrder[2].amount * (selectedOrder === undefined ? '' : 
-                                        selectedOrder[2] === undefined ? '' : 
-                                            selectedOrder[2].price) / 10 ** currencyBook[parseInt(selectedOrder[2].currencyIDTo)].decimals
-                            } {selectedOrder === undefined ? '' : 
-                                selectedOrder[2] === undefined ? '' :
-                                    currencyBook[parseInt(selectedOrder[2].currencyIDFrom)].name
-                            }.
+                            {selection.order.amountFrom} {selection.pair.currencyFromName}
                         </p>
                         <button onClick={fillOrder}>Confirm Fill Order</button>
                         <p>{status}</p>
@@ -236,10 +214,7 @@ const InteractionSection = ({
                             <FaSearch />
                         </button><br/>
                         <FillInfoText>
-                            {selectedOrder === undefined ? '' : 
-                                selectedOrder[1] === undefined ? '' : 
-                                    'currently selected order: ' + selectedOrder[1]
-                            }
+                            {selection.order.orderID}
                         </FillInfoText>
                     </PannelRow>
                     <PannelRow height={'20%'} display={'block'} align={'center'}>

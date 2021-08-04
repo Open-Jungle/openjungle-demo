@@ -8,6 +8,9 @@ const getDexBook = () =>
         if(provider) {
             await provider.request({ method: 'eth_requestAccounts' });
             const networkId = await provider.request({ method: 'net_version' })
+            if(parseInt(networkId) !== 97){
+                reject('Must be one network 97 (Bsc testnet)')
+            }
             provider = new ethers.providers.Web3Provider(provider);
             const signer = provider.getSigner();
             let dexBook = undefined;
@@ -18,11 +21,7 @@ const getDexBook = () =>
                     signer
                 );
             } catch (TypeError) {}
-            if(dexBook === undefined){
-                alert('Try again with Binance Smart Chain!')
-                reject('Try again with Binance Smart Chain!');
-            }
-            resolve({dexBook, provider});									
+            resolve({dexBook});									
             return;
         }
         reject('Install Metamask');

@@ -18,8 +18,7 @@ const getContract = (address) =>
                 );
             } catch (TypeError) {}
             if(contract === undefined){
-                alert('Try again with Binance Smart Chain!')
-                reject('Try again with Binance Smart Chain!');
+                reject('Cant connect to contract: ' + address);
             }
             resolve({contract});									
             return;

@@ -3,7 +3,6 @@ import React from 'react'
 import {
     LandingPageWrapper,
     LandingPageMsgBox,
-    LandingPageButton
 } from './landingPageElements'
 
 const LandingPage = ({connectToDexBook , metamask}) => {

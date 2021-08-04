@@ -7,8 +7,8 @@ import getDexBook from '../utils/getDexBook'
 
 const HomePage = () => {
 
-    const contractAddress = '0x21e71C0084b548EEE3b49F5E5a7C0650aCF504eE';
-    const deployementBlock = 11134377;
+    const contractAddress = '0x248E3a4f999ea7743106b8b6A79052f4bc09eA99';
+    const deployementBlock = 11173717;
     const SIXTEEN_DECIMALS_ONE = 10000000000000000;
     
     const [status, setStatus] = useState('Not started')

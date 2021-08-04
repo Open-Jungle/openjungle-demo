@@ -11,24 +11,37 @@ import {
 import DropdownFrom from '../Dropdowns/DropdownFrom';
 import DropdownTo from '../Dropdowns/DropdownTo';
 
-const PairBar = ({currencyBook, setCurrencyFrom, setCurrencyTo}) => {
-    const [menu, setMenu] = useState([]);
+const PairBar = ({currencyBook, selection, setPair}) => {
+    
+    const [menuFrom, setMenuFrom] = useState([]);
+    const [menuTo, setMenuTo] = useState([]);
 
     useEffect(() => {
-        function bookToOPtions(book) {
-            var m = [];
-            if(book){
-                for(var i in book){
-                    m.push(
-                        book[i].name
-                    );
+        console.log("pair bar Loop");
+        function bookToOPtions(currencyBook, selection) {
+            var menuFrom = [];
+            var menuTo = [];
+            if(currencyBook){
+                for(var currency in currencyBook){
+                    if(currency !== selection.pair.currencyTo & currency !== selection.pair.currencyFrom){
+                        menuFrom.push({ 
+                            "name": currencyBook[currency].symbol,
+                            "address": currency 
+                        })
+                    }
+                    if(currency !== selection.pair.currencyFrom & currency !== selection.pair.currencyTo){
+                        menuTo.push({
+                            "name": currencyBook[currency].symbol,
+                            "address": currency
+                        })
+                    }
                 }
             }
-            setMenu(m);
+            setMenuFrom(menuFrom);
+            setMenuTo(menuTo);
         }
-        bookToOPtions(currencyBook);
-    }, [currencyBook]);
-
+        bookToOPtions(currencyBook, selection);
+    }, [currencyBook, selection]);
 
     return (
         <Bar>
@@ -36,17 +49,17 @@ const PairBar = ({currencyBook, setCurrencyFrom, setCurrencyTo}) => {
                 <PairSelectorTitle>
                     Pair
                 </PairSelectorTitle>
-                <DropdownFrom options={menu} setCurrencyFrom={setCurrencyFrom}/>
-                <DropdownTo options={menu} setCurrencyTo={setCurrencyTo}/>
+                <DropdownFrom options={menuFrom} setPair={setPair} selection={selection}/>
+                <DropdownTo options={menuTo} setPair={setPair} selection={selection}/>
             </PairSelector>
-            {/* <PairInfoDisplay>
+            <PairInfoDisplay>
                 <PairInfoItem>
                     Last Price:
                 </PairInfoItem>
                 <PairInfoItem>
                     Amount of orders:
                 </PairInfoItem>
-            </PairInfoDisplay> */}
+            </PairInfoDisplay>
         </Bar>
     )
 }

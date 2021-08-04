@@ -16,9 +16,7 @@ import {
 const BalOrderSection = ({ 
                     currencyBook,
                     orderBook,
-                    refresh,
-                    setSelectedOrder,
-                    getOrderById
+                    setSelectionByOrderId
                 }) => {
 
     const [isBal, setIsBal] = useState(true);
@@ -30,38 +28,39 @@ const BalOrderSection = ({
     const [myOrderBook, setMyOrderBook] = useState(undefined);
 
     useEffect(() => {
+        console.log("ordersection loop");
+        
+        const handleDecimal = (amount, decimals) => {
+            const a = amount.toString();
+            const l = a.length - decimals;
+            return a.substring(0, l)+"."+a.substring(l);
+        }
+        
         async function filterBook(currencyBook, orderBook){
-            
-            const handleDecimal = (amount, decimals) => {
-                const a = amount.toString();
-                const l = a.length - decimals;
-                return a.substring(0, l)+"."+a.substring(l);
-            }
 
             let provider = await detectEthereumProvider();
             provider = new ethers.providers.Web3Provider(provider);
             const signer = await provider.getSigner().getAddress();
 
             var balBook = [];
-            for(var i in currencyBook) {
-                const { contract } = await getContract(currencyBook[i].address);
-                const name = await contract.name();
-                const symbol = await contract.symbol();
-                const decimals = await contract.decimals();
+            for(let currency in currencyBook) {
+                if(currency === ''){ continue; } 
+                const { contract } = await getContract(currency);
                 const balance = await contract.balanceOf(signer);
                 balBook.push({
-                    "name": name,
-                    "symbol": symbol,
-                    "balance": handleDecimal(balance, decimals)
+                    "name": currencyBook[currency].name,
+                    "symbol": currencyBook[currency].symbol,
+                    "balance": handleDecimal(balance, currencyBook[currency].decimals)
                 });    
             }
             
             var myOrderBook = [];
-            for(var j in orderBook) {
-                for(var jj in orderBook[j]){
-                    if(orderBook[j][jj].owner.toLowerCase() === signer.toLowerCase()){
-                        orderBook[j][jj]["id"] = jj;
-                        myOrderBook.push(orderBook[j][jj]);
+            for(let pair in orderBook) {
+                for(let order in orderBook[pair]){
+                    if(orderBook[pair][order].owner.toLowerCase() === signer.toLowerCase()){
+                        let tempOrder = orderBook[pair][order]
+                        tempOrder["id"] = order;
+                        myOrderBook.push(tempOrder);
                     }
                 }
             }
@@ -69,10 +68,10 @@ const BalOrderSection = ({
             setBalBook(balBook);
         };
         filterBook(currencyBook, orderBook);
-    }, [currencyBook, orderBook, refresh])
+    }, [currencyBook, orderBook])
 
     const onOptionClicked = value => () => {
-        setSelectedOrder(getOrderById(value));
+        setSelectionByOrderId(value);
     };
 
     return (
