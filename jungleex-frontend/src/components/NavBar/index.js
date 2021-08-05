@@ -1,89 +1,59 @@
-import React, {useState, useEffect} from 'react';
+import React from 'react';
 import { FaBars } from 'react-icons/fa';
 import { AiOutlineSetting } from "react-icons/ai";
-import Icon from "../../images/icons/monkey-logo-white-text.png";
-import { animateScroll as scroll } from 'react-scroll';
+import LeafIcon from "../../images/logos/LogoName.png";
 import { 
     Nav,
     NavBarContainer,
     NavLogo,
     MobileIcon,
-    NavMenu,
-    NavItem,
-    NavLinks,
     NavIcon,
     NavTempLogo,
+    NavStatus,
+    DexStatus,
+    NextRefreshTimer,
+    OtherStatus
 } from './NavBarElements';
 
 
-const NavBar = ({ toggle }) => {
-    const [scrollNav, setScrollNav] = useState(false)
-    
-    const changeNav = () => {
-        if(window.scrollY >= 80) {
-            setScrollNav(true)
-        } else {
-            setScrollNav(false)
-        }
-    }
+const NavBar = ({ 
+            toggle,
+            dexStatus,
+            timerSeconds,
+            scrapeStatus  
+        }) => {
 
-    useEffect(() => {
-        window.addEventListener('scroll',changeNav)
-    }, []);
 
-    const toggleHome = () => {
-        scroll.scrollToTop();
-    }
 
     return (
         <>
-            <Nav scrollNav={scrollNav}>
+            <Nav>
                 <NavBarContainer>
-                    <NavLogo onClick={toggleHome}>
-                            <NavIcon src={Icon} type="img/png" />
+                    <NavLogo>
+                            <NavIcon src={LeafIcon} type="img/png" />
                     </NavLogo>
                     <MobileIcon onClick={toggle}>
                         <FaBars />
                     </MobileIcon>
-                    <NavMenu>
-                        <NavItem>
-                            <NavLinks 
-                                to='about'
-                                smoth='true'
-                                duration={500}
-                                spy={true}
-                                exact='true'
-                                offset={-20}
-                            >
-                                Exchange
-                            </NavLinks>
-                        </NavItem>
-                        <NavItem>
-                            <NavLinks 
-                                to='projects'
-                                smoth='true'
-                                duration={500}
-                                spy={true}
-                                exact='true'
-                            >
-                                Learn More
-                            </NavLinks>
-                        </NavItem>
-                        <NavItem>
-                            <NavLinks 
-                                to='team'
-                                smoth='true'
-                                duration={500}
-                                spy={true}
-                                exact='true'
-                                offset={30}
-                            >
-                                Community
-                            </NavLinks>
-                        </NavItem>
-                    </NavMenu> */}
-                    <NavTempLogo onClick={toggleHome}>
-                            <AiOutlineSetting />
+                    
+
+                    <NavTempLogo>
+                        <NavStatus>
+                            <DexStatus>
+                                <p>Status:</p> {dexStatus === "Live" ? <p>{dexStatus}</p> : <p style={{"color": "#FF6A00"}}>{dexStatus}</p>}
+                            </DexStatus>
+                            <NextRefreshTimer>
+                                <p>Next Refresh:</p> <p>{timerSeconds}s</p>
+                            </NextRefreshTimer>
+                            <OtherStatus>
+                                <p>synced with block:</p> <p>{scrapeStatus.latestBlock}</p>
+                            </OtherStatus>
+                            <OtherStatus>
+                                <p>Last Update Took:</p> <p>{scrapeStatus.lastUpdateRunTime}ms</p>
+                            </OtherStatus>
+                        </NavStatus>
+
+                        <AiOutlineSetting />
                     </NavTempLogo>
                 </NavBarContainer>
             </Nav>

@@ -5,7 +5,9 @@ import {
     DropDownHeader,
     DropDownListContainer,
     DropDownList,
-    ListItem
+    ListItem,
+    IconWrapper,
+    ListIconWrapper
 } from '../dropdownElements'
 
 export default function DropdownFrom({ options, setPair, selection }) {
@@ -18,17 +20,21 @@ export default function DropdownFrom({ options, setPair, selection }) {
     setIsOpen(false);
   };
 
+  const handleOnMouseLeave = () => {
+      setIsOpen(false);
+  }
+
   return (
-      <DropDownContainer>
+      <DropDownContainer onMouseLeave={handleOnMouseLeave}>
         <DropDownHeader onClick={toggling}>
-          {selection.pair.currencyFromSymbol || "select"}
+          <IconWrapper src={`https://ipfs.io/ipfs/${selection.pair.currencyFromIPFSIcon}`} alt=""/>{selection.pair.currencyFromSymbol}
         </DropDownHeader>
         {isOpen && (
           <DropDownListContainer>
             <DropDownList>
               {options.map(option => (
                 <ListItem onClick={onOptionClicked(option.address)} key={Math.random()}>
-                  {option.name}
+                    <ListIconWrapper src={`https://ipfs.io/ipfs/${option.icon}`} alt=""/> {option.symbol}
                 </ListItem>
               ))}
             </DropDownList>

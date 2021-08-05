@@ -146,8 +146,14 @@ const HomePage = () => {
                         setStatus("scrapping log nb: " + (nbLogs) + " SetMainData");
                     break;
 
+                    // transfert ownership
+                    case "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0":
+                        nbLogs = nbLogs + 1;
+                        setStatus("scrapping log nb: " + (nbLogs) + " transfert ownership");
+                    break;
+
                     default:
-                        alert('this should not happen');
+                        console.log(events[i].topics[0])
                     break;
                 }
             }

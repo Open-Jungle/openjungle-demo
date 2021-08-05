@@ -1,13 +1,12 @@
 import React from 'react'
-import { animateScroll as scroll } from 'react-scroll';
+import LogoName from '../../images/logos/LogoName.png'
 import { 
     SideBarContainer,
     Icon,
     CloseIcon,
-    SideBarLink,
     SideBarWrapper,
-    SideBarMenu,
-    NavTempLogo
+    LogoWrapper,
+    Logo
 } from './SideBarElements'
 
 const SideBar = ({ 
@@ -15,9 +14,6 @@ const SideBar = ({
             toggle, 
         }) => { 
 
-    const toggleHome = () => {
-        scroll.scrollToTop();
-    }
     
     return (
         <SideBarContainer isOpen={isOpen} onClick={toggle}>
@@ -25,14 +21,9 @@ const SideBar = ({
                 <CloseIcon />
             </Icon>
             <SideBarWrapper>
-                <SideBarMenu>
-                    <SideBarLink to='about' onClick={toggle}>About</SideBarLink>
-                    <SideBarLink to='projects' onClick={toggle}>Projects</SideBarLink>
-                    <SideBarLink to='team' onClick={toggle}>Team</SideBarLink>  
-                </SideBarMenu>
-                <NavTempLogo onClick={toggleHome}>
-                    Lex Propositum
-                </NavTempLogo>
+                <LogoWrapper>
+                    <Logo src={LogoName} alt="Jungle Ex" />
+                </LogoWrapper>
             </SideBarWrapper>
         </SideBarContainer>
     )

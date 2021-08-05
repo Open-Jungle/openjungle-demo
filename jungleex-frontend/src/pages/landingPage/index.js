@@ -1,8 +1,12 @@
 import React from 'react'
+import LogoName from '../../images/logos/LogoName.png'
 
 import {
     LandingPageWrapper,
     LandingPageMsgBox,
+    LogoWrapper,
+    Logo,
+    LandinPageButton
 } from './landingPageElements'
 
 const LandingPage = ({connectToDexBook , metamask}) => {
@@ -10,11 +14,13 @@ const LandingPage = ({connectToDexBook , metamask}) => {
         <LandingPageWrapper>
             
             <LandingPageMsgBox>
-                <h2>Welcome to the Jungle Exchange V0.1</h2> 
+                <LogoWrapper>
+                    <Logo src={LogoName} alt="Jungle Ex" />
+                </LogoWrapper>
                 {metamask ? 
-                    <button onClick={connectToDexBook}>
+                    <LandinPageButton onClick={connectToDexBook}>
                         connect and access the dex
-                    </button>:
+                    </LandinPageButton>:
                     'welcome to the JungleEx :) You will need metamask to access the exchange'
                 }
             </LandingPageMsgBox>

@@ -5,7 +5,10 @@ export const OrderBookWrapper = styled.ul`
     margin: 2%;
     height: 300px;
     list-style-type:none;
-    width: 64%;
+    width: 100%;
+
+    @media screen and (max-width: 768px) {
+    }
 `;
 
 export const OrderWrapper = styled.li`

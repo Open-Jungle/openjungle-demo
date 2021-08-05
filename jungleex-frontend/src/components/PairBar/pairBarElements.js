@@ -1,14 +1,15 @@
 import styled from 'styled-components';
 
 export const Bar = styled.nav`
-    background: green;
+    border-top: 3px solid #6F9F2F;
+    background: #8AC53C;
     height: 60px;
-    margin-top: 80px;
+    margin-top: 50px;
     display: flex;
     justify-content: space-between;
     font-size: 1rem;
     position: sticky;
-    top: 80px;
+    top: 50px;
     z-index: 10;
 
     @media screen and (max-width: 960px){
@@ -31,10 +32,15 @@ export const PairSelectorTitle = styled.div`
 `;
 
 export const PairInfoDisplay = styled.div`
+    padding: 0 12px;
+    width: 500px;
     display: flex;
     flex-direction: row;
+    justify-content: space-between;
+    color: white;
 `;
 
 export const PairInfoItem = styled.div`
-
+    height: 100%;
+    padding-top: 20px;
 `;

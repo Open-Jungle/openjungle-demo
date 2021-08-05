@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { 
     Bar,
     PairSelector,
-    PairInfoDisplay,
-    PairInfoItem,
+    //PairInfoDisplay,
+    //PairInfoItem,
     PairSelectorTitle
 } from './pairBarElements';
 
@@ -25,14 +25,16 @@ const PairBar = ({currencyBook, selection, setPair}) => {
                 for(var currency in currencyBook){
                     if(currency !== selection.pair.currencyTo & currency !== selection.pair.currencyFrom){
                         menuFrom.push({ 
-                            "name": currencyBook[currency].symbol,
-                            "address": currency 
+                            "symbol": currencyBook[currency].symbol,
+                            "address": currency,
+                            "icon": currencyBook[currency].iconIPFSLocation
                         })
                     }
                     if(currency !== selection.pair.currencyFrom & currency !== selection.pair.currencyTo){
                         menuTo.push({
-                            "name": currencyBook[currency].symbol,
-                            "address": currency
+                            "symbol": currencyBook[currency].symbol,
+                            "address": currency,
+                            "icon": currencyBook[currency].iconIPFSLocation
                         })
                     }
                 }
@@ -46,20 +48,20 @@ const PairBar = ({currencyBook, selection, setPair}) => {
     return (
         <Bar>
             <PairSelector>
-                <PairSelectorTitle>
-                    Pair
-                </PairSelectorTitle>
                 <DropdownFrom options={menuFrom} setPair={setPair} selection={selection}/>
+                <PairSelectorTitle>
+                    /
+                </PairSelectorTitle>
                 <DropdownTo options={menuTo} setPair={setPair} selection={selection}/>
             </PairSelector>
-            <PairInfoDisplay>
-                <PairInfoItem>
+            {/* <PairInfoDisplay>
+                 <PairInfoItem>
                     Last Price:
                 </PairInfoItem>
                 <PairInfoItem>
                     Amount of orders:
-                </PairInfoItem>
-            </PairInfoDisplay>
+                </PairInfoItem> 
+            </PairInfoDisplay> */}
         </Bar>
     )
 }
