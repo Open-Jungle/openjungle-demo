@@ -9,6 +9,7 @@ import {
     MobileIcon,
     NavIcon,
     NavTempLogo,
+    NavTempInfo,
     NavStatus,
     DexStatus,
     NextRefreshTimer,
@@ -32,10 +33,29 @@ const NavBar = ({
                     <NavLogo>
                             <NavIcon src={LeafIcon} type="img/png" />
                     </NavLogo>
-                    <MobileIcon onClick={toggle}>
-                        <FaBars />
-                    </MobileIcon>
+
+
+
                     
+                    <NavTempInfo>
+                        <NavStatus>
+                            <DexStatus>
+                                <p>Status:</p> {dexStatus === "Live" ? <p>{dexStatus}</p> : <p style={{"color": "#FF6A00"}}>{dexStatus}</p>}
+                            </DexStatus>
+                            <NextRefreshTimer>
+                                <p>Next Refresh:</p> <p>{timerSeconds}s</p>
+                            </NextRefreshTimer>
+                            <OtherStatus>
+                                <p>synced with block:</p> <p>{scrapeStatus.latestBlock}</p>
+                            </OtherStatus>
+                            <OtherStatus>
+                                <p>Last Update Took:</p> <p>{scrapeStatus.lastUpdateRunTime}ms</p>
+                            </OtherStatus>
+                        </NavStatus>
+                        <MobileIcon onClick={toggle}>
+                            <FaBars />
+                        </MobileIcon>
+                    </NavTempInfo>
 
                     <NavTempLogo>
                         <NavStatus>
@@ -52,7 +72,6 @@ const NavBar = ({
                                 <p>Last Update Took:</p> <p>{scrapeStatus.lastUpdateRunTime}ms</p>
                             </OtherStatus>
                         </NavStatus>
-
                         <AiOutlineSetting />
                     </NavTempLogo>
                 </NavBarContainer>

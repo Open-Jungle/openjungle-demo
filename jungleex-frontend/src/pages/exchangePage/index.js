@@ -16,7 +16,6 @@ import BalOrderSection from '../../components/BalOrderSection';
 
 import {
     FirstRow,
-    SecondRow,
     InteractionSectionWrapper
 } from './exchangePageElements'
 
@@ -68,13 +67,15 @@ const ExchangePage = ({ dexBook, ipfs }) => {
     const [dexStatus, setDexStatus] = useState("Unknow");
     const [initCompleted, setInitCompleted] = useState(false);
     const [timerSeconds, setTimerSeconds] = useState(undefined);
-    const [refreshInterval, setRefreshInterval] = useState(15000);
+    const [refreshInterval] = useState(15000);
 
     //toggles
     const [isOpen, setIsOpen] = useState(false);
     const toggle = () => {setIsOpen(!isOpen)};
 
-    //toggles
+    const [isChart, setIsChart] = useState(false);
+    const toggleChart = () => {setIsChart(!isChart)};
+
     const [isInteraction, setIsInteraction] = useState(false);
     const toggleInteraction = () => {setIsInteraction(!isInteraction)};
 
@@ -391,7 +392,7 @@ const ExchangePage = ({ dexBook, ipfs }) => {
 
                                         const tickData  = await provider.getBlock(events[i].blockNumber);
                                         let tick = {
-                                            time: parseInt(tickData.timestamp+"000"), 
+                                            time: parseInt(tickData.timestamp), 
                                             value: tempOrderBook[pair][orderID].price
                                         };
                                         
@@ -485,7 +486,6 @@ const ExchangePage = ({ dexBook, ipfs }) => {
     }
 
     const setSelectionByOrderId = (orderID) => {
-        let tempSelection = selection;
         for(let pair in orderBook){
             if(orderBook[pair][orderID] !== undefined){
                 let tempSelection = {
@@ -541,36 +541,43 @@ const ExchangePage = ({ dexBook, ipfs }) => {
                         setPair={setPair}
                     />
 
-                    <FirstRow>
-                        <OrderBookSection
-                            orderBook={orderBook}
-                            selection={selection}
-                            setSelectionByOrderId={setSelectionByOrderId}
-                        />
-                        <InteractionSectionWrapper isInteraction={isInteraction}>
-                            <InteractionSection
-                                DEX_ADDRESS={dexBookABI.networks["97"].address}
-                                dexBook={dexBook}
-                                selection={selection}
+                    {isChart ? 
+                        <></> :
+                        <>
+                            <FirstRow>
+                                <OrderBookSection
+                                    orderBook={orderBook}
+                                    selection={selection}
+                                    setSelectionByOrderId={setSelectionByOrderId}
+                                />
+                                <InteractionSectionWrapper isInteraction={isInteraction}>
+                                    <InteractionSection
+                                        DEX_ADDRESS={dexBookABI.networks["97"].address}
+                                        dexBook={dexBook}
+                                        selection={selection}
+                                        setSelectionByOrderId={setSelectionByOrderId}
+                                        toggleInteraction={toggleInteraction}
+                                        isInteraction={isInteraction}
+                                    /> 
+                                </InteractionSectionWrapper>
+                            </FirstRow>
+                    
+                            <BalOrderSection 
+                                currencyBook={currencyBook}
+                                orderBook={orderBook}
                                 setSelectionByOrderId={setSelectionByOrderId}
-                                toggleInteraction={toggleInteraction}
-                                isInteraction={isInteraction}
-                            /> 
-                        </InteractionSectionWrapper>
-                        
-                    </FirstRow>
-                
-                    <SecondRow>
-                        {/* <ChartSection 
-                            selection={selection}
-                            chartData={chartData}
-                        /> */}
-                        <BalOrderSection 
-                            currencyBook={currencyBook}
-                            orderBook={orderBook}
-                            setSelectionByOrderId={setSelectionByOrderId}
-                        />
-                    </SecondRow>
+                            />
+                        </>
+                    }
+                    <ChartSection
+                        selection={selection}
+                        chartData={chartData}
+                        isChart={isChart}
+                        toggleChart={toggleChart}
+                    />
+                    
+
+                    
                 </>
             } 
         </>
