@@ -6,11 +6,6 @@ export const FirstRow = styled.div`
     justify-content: space-between;
 `;
 
-export const SecondRow = styled.div`
-    display: flex;
-    flex-direction: row;
-`;
-
 export const InteractionSectionWrapper = styled.div`
     display: block;
     position: relative;

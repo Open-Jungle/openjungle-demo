@@ -4,13 +4,18 @@ import detectEthereumProvider from '@metamask/detect-provider';
 import { ethers } from 'ethers';	
 
 import {
-    BalOrderSectionWrapper,
-    SectionMenu,
-    MenuOption,
+    Row,
+    MyOrderSectionWrapper,
+    BalSectionWrapper,
     BalSection,
     MyOrderSection,
     BalRowWrapper,
-    OrderWrapper
+    OrderWrapper,
+    OrderBookTitle,
+    Td,
+    Subtitle,
+    TableIcon,
+    MsgPannel
 } from './balOrderSectionElements';
 
 const BalOrderSection = ({ 
@@ -19,22 +24,11 @@ const BalOrderSection = ({
                     setSelectionByOrderId
                 }) => {
 
-    const [isBal, setIsBal] = useState(true);
-    const [isOrder, setIsOrder] = useState(false);
-    const toggleBal = () => {setIsBal(true);setIsOrder(false)};
-    const toggleOrder = () => {setIsBal(false);setIsOrder(true)};
-
     const [balBook, setBalBook] = useState(undefined);
     const [myOrderBook, setMyOrderBook] = useState(undefined);
 
     useEffect(() => {
         console.log("ordersection loop");
-        
-        const handleDecimal = (amount, decimals) => {
-            const a = amount.toString();
-            const l = a.length - decimals;
-            return a.substring(0, l)+"."+a.substring(l);
-        }
         
         async function filterBook(currencyBook, orderBook){
 
@@ -48,9 +42,10 @@ const BalOrderSection = ({
                 const { contract } = await getContract(currency);
                 const balance = await contract.balanceOf(signer);
                 balBook.push({
+                    "currency": currency,
                     "name": currencyBook[currency].name,
                     "symbol": currencyBook[currency].symbol,
-                    "balance": handleDecimal(balance, currencyBook[currency].decimals)
+                    "balance": balance
                 });    
             }
             
@@ -75,40 +70,78 @@ const BalOrderSection = ({
     };
 
     return (
-        <BalOrderSectionWrapper>
-            <SectionMenu>
-                <MenuOption onClick={toggleBal} isOpen={isBal}>
-                    Balances
-                </MenuOption>
-                <MenuOption onClick={toggleOrder} isOpen={isOrder}>
-                    My Orders
-                </MenuOption>
-            </SectionMenu>
-
-            <BalSection isOpen={isBal}>
-                {balBook === undefined ? 
-                    'Balances not loaded yet' : 
-                    balBook.map((item) => (
-                        <BalRowWrapper key={Math.random()}>
-                            Name: {item.name} Symbol: {item.symbol} Balance: {item.balance}
-                        </BalRowWrapper>
-                    ))
-                }
-            </BalSection>
-
-            <MyOrderSection isOpen={isOrder}>
+        <Row>
+            <MyOrderSectionWrapper>
+                <OrderBookTitle>
+                    My Open Orders
+                </OrderBookTitle>
                 {myOrderBook === undefined ? 
-                    'Orders not loaded yet' :
-                    myOrderBook.length === 0 ? 
-                        'You have no open orders' : 
-                        myOrderBook.map((item) => (
-                            <OrderWrapper onClick={onOptionClicked(item.id)} key={Math.random()}>
-                                ID: {item.id} Amount: {item.amount} Price: {item.price} 
-                            </OrderWrapper>
-                        ))
+                    <MsgPannel>
+                        Orders not loaded yet
+                    </MsgPannel> : 
+                    <>
+                        {myOrderBook.length === 0 ? 
+                            <MsgPannel>
+                                You have no open orders
+                            </MsgPannel> :
+                            <MyOrderSection>
+                                <tbody>
+                                    <OrderWrapper>
+                                        <Subtitle>ID</Subtitle>
+                                        <Subtitle>Currency From</Subtitle>
+                                        <Subtitle>Currency To</Subtitle>
+                                        <Subtitle>Amount From</Subtitle>
+                                        <Subtitle>Price</Subtitle>
+                                        <Subtitle>Amount To</Subtitle>
+                                    </OrderWrapper>
+                                    {myOrderBook.map((item) => (
+                                        <OrderWrapper onClick={onOptionClicked(item.id)} key={Math.random()}>
+                                            <Td>{item.id}</Td>
+                                            <Td><TableIcon src={`https://ipfs.io/ipfs/${currencyBook[item.currencyFrom].iconIPFSLocation}`} />{currencyBook[item.currencyFrom].symbol}</Td>
+                                            <Td><TableIcon src={`https://ipfs.io/ipfs/${currencyBook[item.currencyTo].iconIPFSLocation}`} />{currencyBook[item.currencyTo].symbol}</Td>
+                                            <Td>{item.amountFrom / (10 ** currencyBook[item.currencyFrom].decimals)}</Td>
+                                            <Td>{item.price}</Td>
+                                            <Td>{item.amountTo / (10 ** currencyBook[item.currencyTo].decimals)}</Td>
+                                        </OrderWrapper>
+                                    ))}
+                                </tbody>
+                            </MyOrderSection>
+                        }
+                    </>
                 }
-            </MyOrderSection>
-        </BalOrderSectionWrapper>
+            </MyOrderSectionWrapper>
+
+            <BalSectionWrapper>
+                <OrderBookTitle>
+                    My Balances
+                </OrderBookTitle>
+                {balBook === undefined ? 
+                    <MsgPannel>
+                        Balances not loaded yet
+                    </MsgPannel> : 
+                    <BalSection>
+                        <tbody>
+                            <OrderWrapper>
+                                <Subtitle>Icon</Subtitle>
+                                <Subtitle>Name</Subtitle>
+                                <Subtitle>Symbol</Subtitle>
+                                <Subtitle>Balance</Subtitle>
+                                <Subtitle>Balance</Subtitle>
+                            </OrderWrapper>
+                            {balBook.map((item) => (
+                                <BalRowWrapper key={Math.random()}>
+                                    <Td><TableIcon src={`https://ipfs.io/ipfs/${currencyBook[item.currency].iconIPFSLocation}`} /></Td>
+                                    <Td>{item.name}</Td>
+                                    <Td>{item.symbol}</Td>
+                                    <Td>{item.balance / (10 ** currencyBook[item.currency].decimals)}</Td>
+                                    <Td>{currencyBook[item.currency].decimals}</Td>
+                                </BalRowWrapper>
+                            ))}
+                        </tbody>
+                    </BalSection>
+                }
+            </BalSectionWrapper>
+        </Row>
     )
 }
 

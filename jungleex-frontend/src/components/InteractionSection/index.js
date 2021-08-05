@@ -12,7 +12,6 @@ import {
     FillOrderSection,
     CancelOrderSection,
     NewOrderCurrencyPannelRow,
-    PannelRow,
     CurrencyWrapper,
     ArrowWrapper,
     InputWrapper,
@@ -45,9 +44,9 @@ const InteractionSection = ({
     const {parseUnits} = require("@ethersproject/units");
 
     // to manage the toogles ..
-    const [isNew, setIsNew] = useState(true);
+    const [isNew, setIsNew] = useState(false);
     const [isCancel, setIsCancel] = useState(false);
-    const [isFill, setIsFill] = useState(false);
+    const [isFill, setIsFill] = useState(true);
     const toggleNew = () => {
         setIsNew(true);setIsCancel(false);setIsFill(false)
         if(isInteraction === false){
@@ -172,11 +171,11 @@ const InteractionSection = ({
     return (
         <InteractionSectionWrapper>
             <PannelMenu>
-                <PannelMenuOption onClick={toggleNew} isOpen={isNew}>
-                    NEW
-                </PannelMenuOption>
                 <PannelMenuOption onClick={toggleFill} isOpen={isFill}>
                     FILL
+                </PannelMenuOption>
+                <PannelMenuOption onClick={toggleNew} isOpen={isNew}>
+                    NEW
                 </PannelMenuOption>
                 <PannelMenuOption onClick={toggleCancel}  isOpen={isCancel}>
                     CANCEL

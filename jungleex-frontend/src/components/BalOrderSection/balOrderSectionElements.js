@@ -1,51 +1,76 @@
 import styled from "styled-components";
 
-export const BalOrderSectionWrapper = styled.div`
-    border: 2px solid black;
-    margin: 2%;
-    list-style-type:none;
-    width: 100%;
-`;
-
-export const SectionMenu = styled.div`
+export const Row = styled.div`
     display: flex;
-    flex-direction: row;
-`;
-
-export const MenuOption = styled.div`
-    border: 1px solid black;
-    padding: 10px;
-    cursor: pointer;
-    background-color: ${({ isOpen }) => (isOpen ? 'green' : 'white')};
-
-    :hover {
-        background-color: green;
+    
+    @media screen and (max-width: 768px) {
+        display: block;
     }
 `;
 
-export const BalSection = styled.ul`
-    display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
-    list-style-type:none;
+export const MyOrderSectionWrapper = styled.div`
+    width: 100%;
+    min-height: 150px;
 `;
 
-export const BalRowWrapper = styled.li`
-    border: 1px solid green;
-    width: 98%;
-    margin: 1%;
-    border-radius: 5px;
+export const BalSectionWrapper = styled.div`
+    width: 100%;
+    min-height: 150px;
+    border-left: 1px solid #e5e5e5;
+
+    @media screen and (max-width: 768px) {
+        border: none;
+        margin-bottom: 300px;
+    }
 `;
 
-export const MyOrderSection = styled.ul`
-    display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
-    list-style-type:none;
-`; 
+export const BalSection = styled.table`
+    width: 100%;
+    padding-left: 12px;
+`;
 
-export const OrderWrapper = styled.li`
-    border: 1px solid green;
-    width: 98%;
+export const BalRowWrapper = styled.tr`
+    width: 100%;
     cursor: pointer;
     margin: 1%;
-    border-radius: 5px;
 `;
 
+export const MyOrderSection = styled.table`
+    width: 100%;
+    padding-left: 12px;
+`; 
+
+export const OrderWrapper = styled.tr`
+    width: 100%;
+    cursor: pointer;
+    margin: 1%;
+`;
+
+export const OrderBookTitle = styled.div`
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0 12px;
+    color: #6F9F2F;
+`;
+
+export const Td = styled.td`
+`;
+
+export const Subtitle = styled.td`
+    font-size: 10px;
+    color: #8AC53C;
+`;
+
+export const TableIcon = styled.img`
+    margin-top: 2px;
+    margin-right: 3px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid #e5e5e5;
+`;
+
+export const MsgPannel = styled.div`
+
+`;
     

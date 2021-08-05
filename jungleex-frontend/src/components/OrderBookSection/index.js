@@ -2,7 +2,16 @@ import React, { useEffect, useState } from 'react'
 
 import {
     OrderBookWrapper,
-    OrderWrapper
+    OrderWrapper,
+    SellBookWrapper,
+    BuyBookWrapper,
+    OrderBook,
+    OrderBookTitle,
+    Obd,
+    ObdS,
+    Subtitle,
+    SubtitleBuy,
+    MsgPannel
 } from './orderBookElements'
 
 const OrderBookSection = ({ 
@@ -34,6 +43,26 @@ const OrderBookSection = ({
                     break;
                 }
             }
+            if(filteredBuyBook.length > filteredSellBook.length){
+                for(let i = 0; i <= (filteredBuyBook.length - filteredSellBook.length); i++) {
+                    filteredSellBook.push({
+                        "id": '-',
+                        "amountFrom": '-',
+                        "amountTo": '-',
+                        "price": '-'
+                    })
+                }
+            } 
+            if (filteredBuyBook.length < filteredSellBook.length){
+                for(let i = 0; i <= (filteredSellBook.length - filteredBuyBook.length); i++) {
+                    filteredBuyBook.push({
+                        "id": '-',
+                        "amountTo": '-',
+                        "amountFrom": '-',
+                        "price": '-'
+                    })
+                }
+            } 
             setFilteredBuyBook(filteredBuyBook);
             setFilteredSellBook(filteredSellBook);
         };
@@ -45,28 +74,53 @@ const OrderBookSection = ({
     };
     
     return (
-        <OrderBookWrapper>
-            {filteredBuyBook === undefined ? 
-                'Select a pair first' : 
-                filteredBuyBook.length === 0 ? 
-                    'No buy orders for this pair' : 
-                    filteredBuyBook.map((item) => (
-                        <OrderWrapper onClick={onOptionClicked(item.id)} key={Math.random()}>
-                            ID: {item.id} Amount: {item.amountFrom} Price: {item.price}
-                        </OrderWrapper>
-                    ))
-            }
-            {filteredSellBook === undefined ? 
-                'Select a pair first' : 
-                filteredSellBook.length === 0 ? 
-                    'No sell orders for this pair' : 
-                    filteredSellBook.map((item) => (
-                        <OrderWrapper onClick={onOptionClicked(item.id)} key={Math.random()}>
-                            ID: {item.id} Amount: {item.amountTo} Price: {1 / item.price}
-                        </OrderWrapper>
-                    ))
-            }
-        </OrderBookWrapper>
+        <OrderBook>
+            <OrderBookTitle>
+                Order Book
+            </OrderBookTitle>
+            <OrderBookWrapper>
+                {filteredBuyBook === undefined ? 
+                    <MsgPannel>
+                        Orders Not loaded yet
+                    </MsgPannel> :
+                    
+                    <BuyBookWrapper>
+                        <tbody>
+                            <OrderWrapper>
+                                <SubtitleBuy>ID</SubtitleBuy><SubtitleBuy>Amount</SubtitleBuy><SubtitleBuy>Price</SubtitleBuy>
+                            </OrderWrapper>
+                            {filteredBuyBook.map((item) => (
+                                <OrderWrapper onClick={onOptionClicked(item.id)} key={Math.random()}>
+                                    <Obd>{item.id}</Obd>
+                                    <Obd>{item.amountFrom === '-' ? item.amountFrom : (item.amountFrom / (10 ** selection.pair.currencyFromDecimals))}</Obd>
+                                    <Obd>{item.price}</Obd>
+                                </OrderWrapper>
+                            ))}
+                        </tbody>
+                    </BuyBookWrapper>
+                }
+
+                {filteredBuyBook === undefined ? 
+                    <MsgPannel>
+                        Orders Not Loaded yet
+                    </MsgPannel> :
+                    <SellBookWrapper>
+                        <tbody>
+                            <OrderWrapper>
+                                <Subtitle>Price</Subtitle><Subtitle>Amount</Subtitle><Subtitle>ID</Subtitle>
+                            </OrderWrapper>
+                            {filteredSellBook.map((item) => (
+                                <OrderWrapper onClick={onOptionClicked(item.id)} key={Math.random()}>
+                                    <ObdS>{item.price === '-' ? item.price : (1 / item.price)}</ObdS>
+                                    <ObdS>{item.amountTo === '-' ? item.amountTo : (item.amountTo / (10 ** selection.pair.currencyFromDecimals))}</ObdS>
+                                    <ObdS>{item.id}</ObdS>
+                                </OrderWrapper>
+                            ))}
+                        </tbody>
+                    </SellBookWrapper>
+                }
+            </OrderBookWrapper>
+        </OrderBook>
     )
 }
 

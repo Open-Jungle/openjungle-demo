@@ -40,11 +40,10 @@ export const ListItem = styled("li")`
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #8AC53C;
-
+    font-size: 1.2em;
     &:hover {
         color: #6F9F2F;
-        padding: 0.4em;
-        font-size: 1.2em;
+
         background-color: #e5e5e5;
     }
 `;

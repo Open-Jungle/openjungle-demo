@@ -41,6 +41,17 @@ export const NavTempLogo = styled.a`
         display: none;
     }
 `;
+export const NavTempInfo = styled.a`
+    color: #8AC53C;
+    cursor: pointer;
+    font-size: 30px;
+    display: none;
+    align-items: center;
+
+    @media screen and (max-width: 768px){
+        display: flex;
+    }
+`;
 
 export const MobileIcon = styled.div`
     display: none;
@@ -75,6 +86,10 @@ export const NavStatus = styled.div`
     font-size: 8px;
     width: 150px;
     margin-right: 20px;
+
+    @media screen and (max-width: 768px) {
+        width: 120px;
+    }
 `;
 
 export const DexStatus = styled.div`

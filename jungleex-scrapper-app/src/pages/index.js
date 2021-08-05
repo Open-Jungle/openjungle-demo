@@ -110,7 +110,7 @@ const HomePage = () => {
 
                                 const tickData  = await provider.getBlock(events[i].blockNumber);
                                 let tick = {
-                                    time: parseInt(tickData.timestamp+"000"), 
+                                    time: parseInt(tickData.timestamp), 
                                     value: orderBook[pair][orderID].price
                                 };
                                 

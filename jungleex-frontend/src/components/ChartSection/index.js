@@ -1,20 +1,21 @@
 import React, { useEffect } from 'react';
 import { createChart } from 'lightweight-charts';
+import useWindowDimensions from '../../hooks/useWindowDimensions';
 
 import {
     ChartSectionWrapper,
-    Chart
+    Chart,
+    ToggleChartButton
 } from './chartSectionElements';
 
-const ChartSection = ({ 
-                    chartData,
-                    selection
-                }) => {
+const ChartSection = ({ chartData, selection, isChart, toggleChart}) => {
+    
+    const { height, width } = useWindowDimensions();
 
     useEffect(() => {
         console.log("chart section loop");
         
-        async function setChartData(chartData, selection) {
+        const setChartData = (chartData, selection) => {
             let formatedData = [];
             if(selection.pair.pair.length === 84){
                 for(let tick in chartData[selection.pair.pair]){
@@ -34,40 +35,66 @@ const ChartSection = ({
                     }
                 }
             }
-        
+
             document.getElementById("chart1").innerHTML = '';
             var chart = createChart(document.getElementById("chart1"), {
-                width: 450,
-                height: 200,
+                width: width,
+                height: height - 115,
+                grid: {
+                    horzLines: {
+                        color: '#eee',
+                    visible: false,
+                    },
+                    vertLines: {
+                        color: '#ffffff',
+                    },
+                },
+                crosshair: {
+                    horzLine: {
+                        visible: true,
+                        labelVisible: true
+                    },
+                    vertLine: {
+                        visible: true,
+                        style: 0,
+                        width: 2,
+                        color: 'rgba(32, 38, 46, 0.1)',
+                        labelVisible: true,
+                    }
+                },
                 layout: {
                     backgroundColor: '#ffffff',
                     textColor: 'rgba(33, 56, 77, 1)',
                 },
-                grid: {
-                    vertLines: {
-                        color: 'rgba(197, 203, 206, 0.7)',
-                    },
-                    horzLines: {
-                        color: 'rgba(197, 203, 206, 0.7)',
-                    },
-                },
                 timeScale: {
                     timeVisible: true,
-                secondsVisible: false,
+                    secondsVisible: true,
                 },
             });
 
-            var lineSeries = chart.addLineSeries();
+            var lineSeries = chart.addAreaSeries({	
+                topColor: 'rgba(19, 68, 193, 0.4)',	
+                bottomColor: 'rgba(0, 120, 255, 0.0)',
+                lineColor: 'rgba(19, 40, 153, 1.0)',
+                lineWidth: 3
+            });
+
+            chart.timeScale().fitContent();
 
             lineSeries.setData(formatedData);
         }
         setChartData(chartData, selection);
-    }, [chartData, selection])
+    }, [chartData, selection, width, height])
 
     return (
-        <ChartSectionWrapper>
-            <Chart id="chart1" />
-        </ChartSectionWrapper>
+        <>
+            <ToggleChartButton onClick={toggleChart} isChart={isChart}>
+                {isChart ? 'Close Chart' : 'Open Chart'}
+            </ToggleChartButton>
+            <ChartSectionWrapper height={height} width={width} isChart={isChart}>
+                <Chart id="chart1" />
+            </ChartSectionWrapper>
+        </>
     )
 }
 
