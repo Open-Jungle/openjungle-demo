@@ -126,7 +126,6 @@ const BalOrderSection = ({
                                 <Subtitle>Name</Subtitle>
                                 <Subtitle>Symbol</Subtitle>
                                 <Subtitle>Balance</Subtitle>
-                                <Subtitle>Balance</Subtitle>
                             </OrderWrapper>
                             {balBook.map((item) => (
                                 <BalRowWrapper key={Math.random()}>
@@ -134,7 +133,6 @@ const BalOrderSection = ({
                                     <Td>{item.name}</Td>
                                     <Td>{item.symbol}</Td>
                                     <Td>{item.balance / (10 ** currencyBook[item.currency].decimals)}</Td>
-                                    <Td>{currencyBook[item.currency].decimals}</Td>
                                 </BalRowWrapper>
                             ))}
                         </tbody>

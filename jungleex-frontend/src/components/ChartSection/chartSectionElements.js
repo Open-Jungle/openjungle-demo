@@ -30,4 +30,9 @@ export const ToggleChartButton = styled.div`
     &:hover{
         background-color: #6F9F2F;
     }
+
+    @media screen and (max-width: 768px) {
+        top: auto;
+        bottom: 10px;
+    }
 `;

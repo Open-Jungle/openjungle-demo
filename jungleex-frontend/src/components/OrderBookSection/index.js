@@ -26,7 +26,6 @@ const OrderBookSection = ({
         console.log('orderBook Loop');
         function filterBook(){
             var filteredBuyBook = [];
-            var filteredSellBook = [];
             for(let pair in orderBook){
                 if(pair === selection.pair.pair){
                     for(let orderID in orderBook[pair]){        
@@ -34,13 +33,16 @@ const OrderBookSection = ({
                         order["id"] = orderID;
                         filteredBuyBook.push(order);
                     }
-                    for(let orderID in orderBook[selection.pair.invertedPair]){
-                        
-                        let order = orderBook[selection.pair.invertedPair][orderID];
-                        order["id"] = orderID;
-                        filteredSellBook.push(order);
+                }
+            }
+            var filteredSellBook = [];
+            for(let pair in orderBook){
+                if(pair === selection.pair.invertedPair) {
+                    for (let orderID in orderBook[pair]){
+                         let order = orderBook[selection.pair.invertedPair][orderID];
+                         order["id"] = orderID;
+                         filteredSellBook.push(order);
                     }
-                    break;
                 }
             }
             if(filteredBuyBook.length > filteredSellBook.length){
