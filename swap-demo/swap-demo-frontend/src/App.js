@@ -1,25 +1,30 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect } from 'react';
+import detectEthereumProvider from '@metamask/detect-provider';
+
+import SwapPage from './pages/swapPage';
+import LandingPage from './pages/landingPage';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+
+    const [metamask, setMetamask] = useState(false);
+
+    useEffect(() => {
+        async function detectMetaMask() {
+            let provider = await detectEthereumProvider();
+            if(provider) {
+                setMetamask(true);
+            }
+        }
+        detectMetaMask();
+    },[])
+    return (
+        <>
+            {metamask ? 
+                <LandingPage /> : 
+                <SwapPage />
+            }
+        </>
+    );
 }
 
 export default App;
