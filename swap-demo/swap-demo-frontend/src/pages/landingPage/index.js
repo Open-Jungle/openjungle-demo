@@ -1,9 +1,11 @@
 import React from 'react'
 
-const LandingPage = () => {
+const LandingPage = ({connect}) => {
     return (
         <>
-            You need metamask to access the demo
+            <h1>Welcome to the swap demo</h1>
+            <p>Plz log in with Metamask</p>
+            <button onClick={connect}>Connect</button>
         </>
     )
 }

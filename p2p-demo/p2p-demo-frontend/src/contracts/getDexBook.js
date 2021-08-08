@@ -9,7 +9,7 @@ const getDexBook = () =>
             await provider.request({ method: 'eth_requestAccounts' });
             const networkId = await provider.request({ method: 'net_version' })
             if(parseInt(networkId) !== 97){
-                reject('Must be one network 97 (Bsc testnet)')
+                reject('Must be on network 97 (Bsc testnet)')
             }
             provider = new ethers.providers.Web3Provider(provider);
             const signer = provider.getSigner();
